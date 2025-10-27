@@ -1,0 +1,21 @@
+{
+  "name": "johy-document-management",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Document Management System with Staff1 Role",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:frontend\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "start": "concurrently \"npm run start:server\" \"npm run start:frontend\"",
+    "start:server": "cd server && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "install:all": "npm install && cd server && npm install && cd ../frontend && npm install"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

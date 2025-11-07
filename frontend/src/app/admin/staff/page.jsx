@@ -48,11 +48,35 @@ export default function StaffManagementPage() {
   };
 
   const fetchRoles = async () => {
+    // Define default roles to use
+    const defaultRoles = [
+      { name: 'staff1', displayName: 'Form Review & Stamp Calculation', level: 1 },
+      { name: 'staff2', displayName: 'Trustee Details Validation', level: 2 },
+      { name: 'staff3', displayName: 'Land/Plot Details Verification', level: 3 },
+      { name: 'staff4', displayName: 'Approval & Review', level: 4 },
+      { name: 'staff5', displayName: 'Final Approval & Lock', level: 5 },
+      { name: 'admin', displayName: 'System Administrator', level: 10 }
+    ];
+
     try {
+      console.log('Fetching roles...');
       const data = await adminFetch('/api/admin/roles/available');
-      setRoles(data.roles || []);
+      console.log('Roles data received:', data);
+      const rolesList = data.roles || [];
+      
+      // If API returns roles, use them; otherwise use default
+      if (rolesList.length > 0) {
+        console.log('Setting roles from API:', rolesList);
+        setRoles(rolesList);
+      } else {
+        console.log('No roles from API, using default roles');
+        setRoles(defaultRoles);
+      }
     } catch (error) {
       console.error('Error fetching roles:', error);
+      // Set default roles if API fails
+      console.log('Setting default roles due to API error');
+      setRoles(defaultRoles);
     }
   };
 

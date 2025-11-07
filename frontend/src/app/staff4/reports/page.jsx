@@ -11,7 +11,6 @@ export default function Staff4ReportsPage() {
     totalFormsProcessed: 0,
     correctionsMade: [],
     verificationNotes: '',
-    qualityScore: 0,
     recommendations: ''
   });
   const [loading, setLoading] = useState(false);
@@ -115,7 +114,6 @@ export default function Staff4ReportsPage() {
           totalFormsProcessed: 0,
           correctionsMade: [],
           verificationNotes: '',
-          qualityScore: 0,
           recommendations: ''
         });
       } else {
@@ -304,25 +302,11 @@ export default function Staff4ReportsPage() {
             </div>
           </div>
 
-          {/* Quality Assessment */}
+          {/* Verification Notes and Recommendations */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Quality Assessment</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Notes & Recommendations</h2>
             
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quality Score (1-10)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={report.qualityScore}
-                  onChange={(e) => handleInputChange('qualityScore', parseInt(e.target.value) || 0)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Verification Notes

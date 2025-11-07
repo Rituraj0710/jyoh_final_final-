@@ -2,12 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { formsAPI, formUtils } from '@/lib/services/forms';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 const UserFormsDashboard = () => {
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [stats, setStats] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+  const { getAuthHeaders } = useAuth();
   const [filters, setFilters] = useState({
     serviceType: '',
     status: ''
@@ -69,6 +72,46 @@ const UserFormsDashboard = () => {
   // Get status badge color
   const getStatusBadgeColor = (status) => {
     return formUtils.getStatusBadgeColor(status);
+  };
+
+  // Handle PDF download
+  const handleViewPDF = async (formId) => {
+    try {
+      setDownloading(true);
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
+      
+      const response = await fetch(`${API_BASE}/api/user/forms/${formId}/download`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `form-${formId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        let errorMessage = 'Failed to download PDF';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = `Server error (${response.status}): ${response.statusText}`;
+        }
+        alert(errorMessage);
+        console.error('Download error response:', response.status, errorMessage);
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert(`Error: ${error.message || 'Failed to download PDF. Please try again.'}`);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -243,12 +286,14 @@ const UserFormsDashboard = () => {
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Link
-                        href={`/${form.serviceType}`}
-                        className="text-blue-600 hover:text-blue-900 text-sm"
+                      <button
+                        onClick={() => handleViewPDF(form._id)}
+                        className="text-blue-600 hover:text-blue-900 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!['submitted', 'under_review', 'in-progress', 'cross_verified', 'verified', 'approved', 'completed'].includes(form.status) || downloading}
+                        title={!['submitted', 'under_review', 'in-progress', 'cross_verified', 'verified', 'approved', 'completed'].includes(form.status) ? 'Form must be submitted to view PDF' : 'Download PDF'}
                       >
-                        View
-                      </Link>
+                        {downloading ? 'Downloading...' : 'View'}
+                      </button>
                       {form.status === 'draft' && (
                         <Link
                           href={`/${form.serviceType}?edit=${form._id}`}

@@ -21,6 +21,7 @@ router.put('/forms/:id/update', authLimiter, Staff3Controller.updateForm);
 
 // Work report routes
 router.get('/work-data', authLimiter, Staff3Controller.getWorkData);
-router.post('/work-report', authLimiter, Staff3Controller.submitWorkReport);
+router.post('/reports', authLimiter, Staff3Controller.submitWorkReport);
+router.get('/reports', authLimiter, Staff3Controller.getWorkReports);
 
 export default router;

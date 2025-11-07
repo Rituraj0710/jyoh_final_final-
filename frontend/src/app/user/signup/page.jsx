@@ -161,83 +161,83 @@ export default function UserSignupPage() {
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Full Name
               </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your full name"
-              />
+               <input
+                 id="name"
+                 name="name"
+                 type="text"
+                 required
+                 value={formData.name}
+                 onChange={handleChange}
+                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-700 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                 placeholder="Enter your full name"
+               />
             </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email Address
               </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your email address"
-              />
+               <input
+                 id="email"
+                 name="email"
+                 type="email"
+                 autoComplete="email"
+                 required
+                 value={formData.email}
+                 onChange={handleChange}
+                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-700 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                 placeholder="Enter your email address"
+               />
             </div>
 
             <div>
               <label htmlFor="contact" className="block text-sm font-medium text-gray-700">
                 Contact Number
               </label>
-              <input
-                id="contact"
-                name="contact"
-                type="tel"
-                required
-                value={formData.contact}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your contact number"
-              />
+               <input
+                 id="contact"
+                 name="contact"
+                 type="tel"
+                 required
+                 value={formData.contact}
+                 onChange={handleChange}
+                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-700 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                 placeholder="Enter your contact number"
+               />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Create a password (min 6 characters)"
-              />
+               <input
+                 id="password"
+                 name="password"
+                 type="password"
+                 autoComplete="new-password"
+                 required
+                 value={formData.password}
+                 onChange={handleChange}
+                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-700 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                 placeholder="Create a password (min 6 characters)"
+               />
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password
               </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm your password"
-              />
+               <input
+                 id="confirmPassword"
+                 name="confirmPassword"
+                 type="password"
+                 autoComplete="new-password"
+                 required
+                 value={formData.confirmPassword}
+                 onChange={handleChange}
+                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-700 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                 placeholder="Confirm your password"
+               />
             </div>
           </div>
 
@@ -274,7 +274,7 @@ export default function UserSignupPage() {
                 href="/user/login"
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
-                Sign in here
+                Login
               </Link>
             </p>
           </div>

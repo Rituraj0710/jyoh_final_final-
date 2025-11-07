@@ -46,16 +46,12 @@ class UserSignupController {
         });
       }
 
-      // Hash password
-      const saltRounds = 12;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-      // Create new user
+      // Create new user (password will be hashed by pre-save hook in User model)
       const newUser = new User({
         name: name.trim(),
         email: email.toLowerCase().trim(),
         phone: contact.trim(), // Map contact to phone field
-        password: hashedPassword,
+        password: password, // Let the User model's pre-save hook hash it
         role: 'user1', // Default role for normal users
         is_verified: false, // Will be verified via email
         isActive: true
@@ -89,25 +85,65 @@ class UserSignupController {
       try {
         await sendSignupEmail(email, otp, newUser.name);
         
-        logger.info(`Verification email sent to: ${email}`, {
+        logger.info(`✅ Verification email sent successfully to: ${email}`, {
           userId: newUser._id,
           email: email
         });
 
       } catch (emailError) {
-        logger.error(`Failed to send verification email to ${email}:`, emailError);
+        logger.error(`❌ Failed to send verification email to ${email}:`, {
+          error: emailError.message,
+          code: emailError.code,
+          stack: emailError.stack,
+          emailHost: process.env.EMAIL_HOST,
+          emailPort: process.env.EMAIL_PORT
+        });
         
-        // Still return success but indicate email issue
+        // Check if it's an invalid email error
+        if (emailError.message.includes('Invalid email format')) {
+          return res.status(400).json({
+            status: "failed",
+            message: "Invalid email address format. Please check and try again.",
+            error: process.env.NODE_ENV === 'development' ? emailError.message : 'Invalid email format'
+          });
+        }
+        
+        // Check if it's an SMTP connection error
+        if (emailError.message.includes('SMTP server connection failed')) {
+          logger.error('⚠️ SMTP configuration issue detected. Please check EMAIL_HOST, EMAIL_PORT, EMAIL_USER, and EMAIL_PASS in .env file');
+        }
+        
+        // Return detailed error for development
+        if (process.env.NODE_ENV === 'development') {
+          return res.status(500).json({
+            status: "partial_success",
+            message: "Account created but email verification failed",
+            error: emailError.message,
+            debugging: {
+              emailHost: process.env.EMAIL_HOST,
+              emailPort: process.env.EMAIL_PORT,
+              hasEmailUser: !!process.env.EMAIL_USER,
+              hasEmailPass: !!process.env.EMAIL_PASS
+            },
+            account: {
+              userId: newUser._id,
+              email: newUser.email,
+              name: newUser.name,
+              requiresOTP: true
+            }
+          });
+        }
+        
+        // Still return success but indicate email issue (production)
         return res.status(201).json({
           status: "success",
-          message: "Account created but failed to send verification email. Please contact support.",
+          message: "Account created successfully. Please contact support to complete email verification.",
           data: {
             userId: newUser._id,
             email: newUser.email,
             name: newUser.name,
             isVerified: false,
-            requiresOTP: true,
-            emailError: process.env.NODE_ENV === 'development' ? emailError.message : 'Email service unavailable'
+            requiresOTP: true
           }
         });
       }

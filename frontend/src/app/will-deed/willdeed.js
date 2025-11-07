@@ -491,8 +491,13 @@ function renderDefaultRules() {
   DEFAULT_RULES.forEach((r, i) => {
     const id = "rule_" + i;
     const wrap = document.createElement("div");
-    wrap.className = "flex items-center gap-2";
-    wrap.innerHTML = `<input type="checkbox" id="${id}" value="${r}"> <label for="${id}" class="text-sm">${r}</label>`;
+    wrap.className = "rule-item-table";
+    wrap.innerHTML = `
+      <div class="flex items-start gap-2">
+        <input type="checkbox" id="${id}" value="${r}" class="mt-1" />
+        <label for="${id}" class="text-xs leading-relaxed cursor-pointer">${r}</label>
+      </div>
+    `;
     box.appendChild(wrap);
   });
 }
@@ -500,12 +505,14 @@ function renderDefaultRules() {
 function addCustomRule() {
   const box = document.getElementById("rulesList");
   const wrap = document.createElement("div");
-  wrap.className = "flex items-center gap-2";
+  wrap.className = "rule-item-table";
   const uid = Math.random().toString(36).slice(2, 7);
   wrap.innerHTML = `
-    <input type="checkbox" id="cr_${uid}" value="">
-    <input type="text" class="border rounded px-2 py-1 w-full" placeholder="Custom rule text" oninput="this.previousElementSibling.value=this.value">
-    <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="this.parentElement.remove()">Remove</button>
+    <div class="flex items-start gap-2">
+      <input type="checkbox" id="cr_${uid}" value="" class="mt-1">
+      <input type="text" class="border rounded px-2 py-1 flex-1 text-xs" placeholder="Custom rule text" oninput="this.previousElementSibling.value=this.value">
+      <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-0.5 rounded text-xs" onclick="this.closest('.rule-item-table').remove()">×</button>
+    </div>
   `;
   box.appendChild(wrap);
 }
@@ -516,16 +523,18 @@ function toggleAllRules(cb) {
 
 function toggleConditions(cb) {
   const el = document.getElementById("conditionsArea");
-  if (el) el.className = cb.checked ? "mt-2" : "mt-2 hidden";
+  if (el) el.className = cb.checked ? "mt-1.5" : "mt-1.5 hidden";
 }
 
 function addCondition() {
   const box = document.getElementById("conditionsList");
   const div = document.createElement("div");
-  div.className = "flex items-center gap-2";
+  div.className = "condition-item-table";
   div.innerHTML = `
-    <input type="text" class="border rounded px-2 py-1 w-full" placeholder="Condition text">
-    <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="this.parentElement.remove()">Remove</button>
+    <div class="flex items-start gap-2">
+      <input type="text" class="border rounded px-2 py-1 flex-1 text-xs" placeholder="Condition text">
+      <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-0.5 rounded text-xs" onclick="this.closest('.condition-item-table').remove()">×</button>
+    </div>
   `;
   box.appendChild(div);
 }
@@ -813,12 +822,14 @@ function loadDraft() {
       if (boxes[i]) boxes[i].checked = !!r.checked;
       else if (r.val) {
         addCustomRule();
-        const last = document.querySelectorAll("#rulesList .flex");
+        const last = document.querySelectorAll("#rulesList .rule-item-table");
         const input = last[last.length - 1].querySelector("input[type='checkbox']");
-        input.value = r.val;
-        input.checked = !!r.checked;
-        const text = last[last.length - 1].querySelector("input[type='text']");
-        if (text) text.value = r.val;
+        if (input) {
+          input.value = r.val;
+          input.checked = !!r.checked;
+          const text = last[last.length - 1].querySelector("input[type='text']");
+          if (text) text.value = r.val;
+        }
       }
     });
     document.getElementById("conditionsList").innerHTML = "";

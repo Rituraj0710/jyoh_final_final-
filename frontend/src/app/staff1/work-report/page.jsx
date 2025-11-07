@@ -68,9 +68,13 @@ export default function Staff1WorkReportPage() {
       }
 
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
+      const headers = {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      };
       const response = await fetch(`${API_BASE}/api/staff/1/reports`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: headers,
         body: JSON.stringify(newReport)
       });
 

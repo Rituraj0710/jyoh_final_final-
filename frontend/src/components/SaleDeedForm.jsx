@@ -69,25 +69,25 @@ const SaleDeedFormContent = () => {
   const { goToPreview, formData: workflowFormData } = useFormWorkflow();
   const { t } = useTranslation();
   
-  // Form state
+  // Form state - start with empty values, don't load from workflow
   const [formData, setFormData] = useState({
-    documentType: workflowFormData?.documentType || '',
-    propertyType: workflowFormData?.propertyType || '',
-    plotType: workflowFormData?.plotType || '',
-    salePrice: workflowFormData?.salePrice || '',
-    circleRateAmount: workflowFormData?.circleRateAmount || '',
-    areaInputType: workflowFormData?.areaInputType || 'total',
-    area: workflowFormData?.area || '',
-    areaUnit: workflowFormData?.areaUnit || 'sq_meters',
-    propertyLength: workflowFormData?.propertyLength || '',
-    propertyWidth: workflowFormData?.propertyWidth || '',
-    dimUnit: workflowFormData?.dimUnit || 'meters',
-    buildupType: workflowFormData?.buildupType || 'single-shop',
-    numShops: workflowFormData?.numShops || 1,
-    numFloorsMall: workflowFormData?.numFloorsMall || 1,
-    numFloorsMulti: workflowFormData?.numFloorsMulti || 1,
-    superAreaMulti: workflowFormData?.superAreaMulti || '',
-    coveredAreaMulti: workflowFormData?.coveredAreaMulti || '',
+    documentType: '',
+    propertyType: '',
+    plotType: '',
+    salePrice: '',
+    circleRateAmount: '',
+    areaInputType: 'total',
+    area: '',
+    areaUnit: 'sq_meters',
+    propertyLength: '',
+    propertyWidth: '',
+    dimUnit: 'meters',
+    buildupType: 'single-shop',
+    numShops: 1,
+    numFloorsMall: 1,
+    numFloorsMulti: 1,
+    superAreaMulti: '',
+    coveredAreaMulti: '',
     nalkoopCount: 0,
     borewellCount: 0,
     state: '',
@@ -114,8 +114,8 @@ const SaleDeedFormContent = () => {
     otherDeduction: ''
   });
 
-  // Dynamic arrays
-  const [sellers, setSellers] = useState(workflowFormData?.sellers || [{
+  // Dynamic arrays - start empty
+  const [sellers, setSellers] = useState([{
     name: '',
     relation: '',
     address: '',
@@ -124,7 +124,7 @@ const SaleDeedFormContent = () => {
     idNo: ''
   }]);
 
-  const [buyers, setBuyers] = useState(workflowFormData?.buyers || [{
+  const [buyers, setBuyers] = useState([{
     name: '',
     relation: '',
     address: '',
@@ -133,18 +133,18 @@ const SaleDeedFormContent = () => {
     idNo: ''
   }]);
 
-  const [witnesses, setWitnesses] = useState(workflowFormData?.witnesses || [
+  const [witnesses, setWitnesses] = useState([
     { name: '', relation: '', address: '', mobile: '' },
     { name: '', relation: '', address: '', mobile: '' }
   ]);
 
-  const [rooms, setRooms] = useState(workflowFormData?.rooms || []);
-  const [trees, setTrees] = useState(workflowFormData?.trees || []);
-  const [shops, setShops] = useState(workflowFormData?.shops || []);
-  const [mallFloors, setMallFloors] = useState(workflowFormData?.mallFloors || []);
-  const [facilities, setFacilities] = useState(workflowFormData?.facilities || []);
-  const [dynamicFacilities, setDynamicFacilities] = useState(workflowFormData?.dynamicFacilities || []);
-  const [uploadedFiles, setUploadedFiles] = useState(workflowFormData?.uploadedFiles || []);
+  const [rooms, setRooms] = useState([]);
+  const [trees, setTrees] = useState([]);
+  const [shops, setShops] = useState([]);
+  const [mallFloors, setMallFloors] = useState([]);
+  const [facilities, setFacilities] = useState([]);
+  const [dynamicFacilities, setDynamicFacilities] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // UI state
   const [showCalculations, setShowCalculations] = useState(false);
@@ -300,10 +300,10 @@ const SaleDeedFormContent = () => {
       };
 
       localStorage.setItem('sale_deed_draft_v1', JSON.stringify(draftData));
-      alert('Draft saved successfully to local storage!');
+      // Silent save - no alert
     } catch (error) {
       console.error('Error saving draft:', error);
-      alert('Failed to save draft: ' + error.message);
+      // Silent error - no alert
     }
   };
 
@@ -311,7 +311,7 @@ const SaleDeedFormContent = () => {
     try {
       const savedDraft = localStorage.getItem('sale_deed_draft_v1');
       if (!savedDraft) {
-        alert('No saved draft found!');
+        // No saved draft - silently continue
         return;
       }
 
@@ -333,10 +333,10 @@ const SaleDeedFormContent = () => {
         setShowCalculations(true);
       }
 
-      alert('Draft loaded successfully!');
+      // Silent load - no alert
     } catch (error) {
       console.error('Error loading draft:', error);
-      alert('Failed to load draft: ' + error.message);
+      // Silent error - no alert
     }
   };
 
@@ -352,10 +352,10 @@ const SaleDeedFormContent = () => {
     return () => clearTimeout(timeoutId);
   }, [formData, sellers, buyers, witnesses]);
 
-  // Load draft on component mount
-  useEffect(() => {
-    loadDraft();
-  }, []);
+  // Don't auto-load draft on component mount - start fresh
+  // useEffect(() => {
+  //   loadDraft();
+  // }, []);
 
   // Calculate form values
   const calculateFormValues = () => {
@@ -818,10 +818,10 @@ const SaleDeedFormContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 w-full px-2 sm:px-4 lg:px-6 py-3">
+      <div className="w-full">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-3">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Sale Deed Form Generator</h1>
@@ -850,10 +850,29 @@ const SaleDeedFormContent = () => {
               </button>
               <button 
                 className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                onClick={handleSaveData} 
-                disabled={isLoading}
+                onClick={() => {
+                  const results = calculateFormValues();
+                  if (results) {
+                    const dataToSave = {
+                      ...formData,
+                      sellers,
+                      buyers,
+                      witnesses,
+                      rooms,
+                      trees,
+                      shops,
+                      mallFloors,
+                      facilities,
+                      dynamicFacilities,
+                      calculations: results,
+                      amount: 1500,
+                      formType: 'sale-deed'
+                    };
+                    goToPreview(dataToSave);
+                  }
+                }}
               >
-                {isLoading ? '⏳ Saving...' : '✅ Submit'}
+                ✅ Submit
               </button>
             </div>
           </div>
@@ -866,11 +885,11 @@ const SaleDeedFormContent = () => {
             <p className="text-gray-600">Professional Property Transaction Documentation</p>
           </div>
 
-        <form className="space-y-6">
+        <form className="space-y-3">
           {/* Property Information Section */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Property Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 pb-2 border-b border-gray-200">Property Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3">
               <div>
                 <label>Document Type *</label>
                 <select
@@ -1736,10 +1755,10 @@ const SaleDeedFormContent = () => {
           </div>
 
           {/* Property Description Section */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Property Description</h3>
+          <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 pb-2 border-b border-gray-200">Property Description</h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
                 <input

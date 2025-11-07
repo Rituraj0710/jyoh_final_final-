@@ -170,6 +170,7 @@ export default function AdminFormsDataPage() {
       'will-deed': { name: 'Will Deed', icon: '📜', color: 'bg-green-50 border-green-200' },
       'trust-deed': { name: 'Trust Deed', icon: '🤝', color: 'bg-purple-50 border-purple-200' },
       'property-registration': { name: 'Property Registration', icon: '📋', color: 'bg-orange-50 border-orange-200' },
+      'property-sale-certificate': { name: 'Property Sale Certificate', icon: '📄', color: 'bg-yellow-50 border-yellow-200' },
       'power-of-attorney': { name: 'Power of Attorney', icon: '⚖️', color: 'bg-red-50 border-red-200' },
       'adoption-deed': { name: 'Adoption Deed', icon: '👶', color: 'bg-pink-50 border-pink-200' },
       'contact-form': { name: 'Contact Form', icon: '📞', color: 'bg-gray-50 border-gray-200' }
@@ -264,6 +265,7 @@ export default function AdminFormsDataPage() {
               <option value="will-deed">Will Deed</option>
               <option value="trust-deed">Trust Deed</option>
               <option value="property-registration">Property Registration</option>
+              <option value="property-sale-certificate">Property Sale Certificate</option>
               <option value="power-of-attorney">Power of Attorney</option>
               <option value="adoption-deed">Adoption Deed</option>
               <option value="contact-form">Contact Form</option>

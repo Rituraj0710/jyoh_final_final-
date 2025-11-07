@@ -15,7 +15,7 @@ export default function Staff4FormDetailPage() {
   const [verificationNotes, setVerificationNotes] = useState('');
   const [editableFields, setEditableFields] = useState({});
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState('primary'); // 'primary', 'trustee', 'land', 'all'
+  const [activeTab, setActiveTab] = useState('all'); // 'primary', 'trustee', 'land', 'all' - Default to 'all' to show all verifications
 
   useEffect(() => {
     if (params.id) {
@@ -26,22 +26,52 @@ export default function Staff4FormDetailPage() {
   const fetchFormDetails = async () => {
     try {
       setLoading(true);
+      setError(null);
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
+      
+      console.log('Fetching form details for ID:', params.id);
+      console.log('API URL:', `${API_BASE}/api/staff/4/forms/${params.id}`);
+      
       const response = await fetch(`${API_BASE}/api/staff/4/forms/${params.id}`, {
         headers: getAuthHeaders()
       });
 
+      console.log('Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Form data received:', data);
+        console.log('Staff sections available:', !!data.data?.form?.staffSections);
+        
         setForm(data.data.form);
         // Initialize editable fields with current form data
         setEditableFields(data.data.form.data || {});
+        // Also set staff sections if available
+        if (data.data.form.staffSections) {
+          console.log('Staff1 sections:', data.data.form.staffSections.staff1);
+          console.log('Staff2 sections:', data.data.form.staffSections.staff2);
+          console.log('Staff3 sections:', data.data.form.staffSections.staff3);
+          
+          // Merge all staff sections for editing
+          const allSections = {
+            ...data.data.form.staffSections.staff1,
+            ...data.data.form.staffSections.staff2,
+            ...data.data.form.staffSections.staff3
+          };
+          setEditableFields(prev => ({ ...prev, ...allSections }));
+        } else {
+          console.warn('No staffSections found in form data. Available keys:', Object.keys(data.data.form));
+        }
       } else {
-        throw new Error('Failed to fetch form details');
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        const errorMessage = errorData.message || `HTTP ${response.status}: Failed to fetch form details`;
+        console.error('API Error:', errorData);
+        console.error('Response status:', response.status);
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error fetching form details:', error);
-      setError(error.message);
+      setError(error.message || 'Failed to fetch form details. Please check the console for more information.');
     } finally {
       setLoading(false);
     }
@@ -55,31 +85,67 @@ export default function Staff4FormDetailPage() {
   };
 
   const handleCrossVerification = async (approved) => {
+    if (!params.id) {
+      alert('Error: Form ID is missing');
+      return;
+    }
+
+    // Confirm action
+    const actionText = approved ? 'approve cross-verification' : 'mark for correction';
+    if (!confirm(`Are you sure you want to ${actionText} this form?`)) {
+      return;
+    }
+
     try {
       setVerificationLoading(true);
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
+      
+      const requestBody = {
+        approved,
+        verificationNotes: verificationNotes || '',
+        updatedFields: isEditing ? editableFields : null,
+        corrections: isEditing ? getCorrectionsSummary() : null
+      };
+
+      console.log('Sending cross-verification request:', {
+        url: `${API_BASE}/api/staff/4/forms/${params.id}/cross-verify`,
+        method: 'PUT',
+        body: requestBody,
+        formId: params.id
+      });
+
+      const headers = getAuthHeaders();
+      console.log('Request headers:', { hasAuth: !!headers.Authorization, contentType: headers['Content-Type'] });
+
       const response = await fetch(`${API_BASE}/api/staff/4/forms/${params.id}/cross-verify`, {
         method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          approved,
-          verificationNotes,
-          updatedFields: isEditing ? editableFields : null,
-          corrections: isEditing ? getCorrectionsSummary() : null
-        })
+        headers: headers,
+        body: JSON.stringify(requestBody)
       });
+
+      console.log('Cross-verification response status:', response.status, response.statusText);
 
       if (response.ok) {
         const data = await response.json();
-        alert(data.message || 'Cross-verification completed successfully');
+        console.log('Cross-verification success:', data);
+        alert(data.message || `Form ${approved ? 'cross-verified' : 'marked for correction'} successfully`);
         router.push('/staff4/forms');
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Cross-verification failed');
+        const errorText = await response.text();
+        console.error('Cross-verification error response:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || 'Unknown error' };
+        }
+        const errorMessage = errorData.message || `HTTP ${response.status}: Cross-verification failed`;
+        console.error('Cross-verification error:', errorData);
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error during cross-verification:', error);
-      alert(error.message || 'Cross-verification failed');
+      alert(error.message || 'Cross-verification failed. Please check the console for details.');
     } finally {
       setVerificationLoading(false);
     }
@@ -145,6 +211,420 @@ export default function Staff4FormDetailPage() {
     } else {
       return { status: 'pending', color: 'yellow' };
     }
+  };
+
+  // Render Staff1 Section
+  const renderStaff1Section = () => {
+    const staff1Data = form?.staffSections?.staff1 || {};
+    const serviceType = form?.serviceType;
+
+    if (serviceType === 'sale-deed') {
+      return (
+        <div className="space-y-6">
+          {/* Basic Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+              <p className="text-sm text-gray-900">{staff1Data.documentType || 'Not provided'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+              <p className="text-sm text-gray-900">{staff1Data.propertyType || 'Not provided'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Plot Type</label>
+              <p className="text-sm text-gray-900">{staff1Data.plotType || 'Not provided'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sale Price</label>
+              <p className="text-sm text-gray-900">{staff1Data.salePrice ? `₹${staff1Data.salePrice.toLocaleString()}` : 'Not provided'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Circle Rate Amount</label>
+              <p className="text-sm text-gray-900">{staff1Data.circleRateAmount ? `₹${staff1Data.circleRateAmount.toLocaleString()}` : 'Not provided'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Area</label>
+              <p className="text-sm text-gray-900">{staff1Data.area ? `${staff1Data.area} ${staff1Data.areaUnit || 'sq_meters'}` : 'Not provided'}</p>
+            </div>
+          </div>
+
+          {/* Sellers */}
+          {staff1Data.sellers && staff1Data.sellers.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Sellers ({staff1Data.sellers.length})</h4>
+              <div className="space-y-4">
+                {staff1Data.sellers.map((seller, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
+                        <p className="text-sm text-gray-900">{seller.name || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Relation</label>
+                        <p className="text-sm text-gray-900">{seller.relation || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Mobile</label>
+                        <p className="text-sm text-gray-900">{seller.mobile || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+                        <p className="text-sm text-gray-900">{seller.address || 'Not provided'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Buyers */}
+          {staff1Data.buyers && staff1Data.buyers.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Buyers ({staff1Data.buyers.length})</h4>
+              <div className="space-y-4">
+                {staff1Data.buyers.map((buyer, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
+                        <p className="text-sm text-gray-900">{buyer.name || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Relation</label>
+                        <p className="text-sm text-gray-900">{buyer.relation || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Mobile</label>
+                        <p className="text-sm text-gray-900">{buyer.mobile || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+                        <p className="text-sm text-gray-900">{buyer.address || 'Not provided'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Witnesses */}
+          {staff1Data.witnesses && staff1Data.witnesses.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Witnesses ({staff1Data.witnesses.length})</h4>
+              <div className="space-y-4">
+                {staff1Data.witnesses.map((witness, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
+                        <p className="text-sm text-gray-900">{witness.name || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Relation</label>
+                        <p className="text-sm text-gray-900">{witness.relation || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Mobile</label>
+                        <p className="text-sm text-gray-900">{witness.mobile || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+                        <p className="text-sm text-gray-900">{witness.address || 'Not provided'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // For other form types
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Applicant Name</label>
+          <p className="text-sm text-gray-900">{staff1Data.applicantName || staff1Data.name || 'Not provided'}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <p className="text-sm text-gray-900">{staff1Data.applicantEmail || staff1Data.email || 'Not provided'}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+          <p className="text-sm text-gray-900">{staff1Data.phoneNumber || staff1Data.mobile || staff1Data.phone || 'Not provided'}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+          <p className="text-sm text-gray-900">{staff1Data.serviceType || serviceType || 'Not provided'}</p>
+        </div>
+      </div>
+    );
+  };
+
+  // Render Staff2 Section
+  const renderStaff2Section = () => {
+    const staff2Data = form?.staffSections?.staff2 || {};
+    const serviceType = form?.serviceType;
+
+    if (serviceType === 'sale-deed') {
+      return (
+        <div className="space-y-6">
+          {/* Sellers with ID Verification */}
+          {staff2Data.sellers && staff2Data.sellers.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Sellers - Detailed Verification ({staff2Data.sellers.length})</h4>
+              <div className="space-y-4">
+                {staff2Data.sellers.map((seller, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-blue-50">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
+                        <p className="text-sm text-gray-900">{seller.name || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">ID Type</label>
+                        <p className="text-sm text-gray-900">{seller.idType || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">ID Number</label>
+                        <p className="text-sm text-gray-900">{seller.idNo || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Mobile</label>
+                        <p className="text-sm text-gray-900">{seller.mobile || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+                        <p className="text-sm text-gray-900">{seller.address || 'Not provided'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Buyers with ID Verification */}
+          {staff2Data.buyers && staff2Data.buyers.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Buyers - Detailed Verification ({staff2Data.buyers.length})</h4>
+              <div className="space-y-4">
+                {staff2Data.buyers.map((buyer, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-green-50">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
+                        <p className="text-sm text-gray-900">{buyer.name || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">ID Type</label>
+                        <p className="text-sm text-gray-900">{buyer.idType || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">ID Number</label>
+                        <p className="text-sm text-gray-900">{buyer.idNo || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Mobile</label>
+                        <p className="text-sm text-gray-900">{buyer.mobile || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+                        <p className="text-sm text-gray-900">{buyer.address || 'Not provided'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Payment/Stamp Information */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Payment & Stamp Information</h4>
+            <div className="border border-gray-200 rounded-lg p-4 bg-yellow-50">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Sale Price</label>
+                  <p className="text-sm font-semibold text-gray-900">{staff2Data.salePrice ? `₹${staff2Data.salePrice.toLocaleString()}` : 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Circle Rate Amount</label>
+                  <p className="text-sm font-semibold text-gray-900">{staff2Data.circleRateAmount ? `₹${staff2Data.circleRateAmount.toLocaleString()}` : 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Stamp Duty</label>
+                  <p className="text-sm font-semibold text-gray-900">{staff2Data.stampDuty ? `₹${staff2Data.stampDuty.toLocaleString()}` : 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Registration Charge</label>
+                  <p className="text-sm font-semibold text-gray-900">{staff2Data.registrationCharge ? `₹${staff2Data.registrationCharge.toLocaleString()}` : 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Court Fee</label>
+                  <p className="text-sm font-semibold text-gray-900">{staff2Data.courtFee ? `₹${staff2Data.courtFee.toLocaleString()}` : 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Total Payable</label>
+                  <p className="text-sm font-semibold text-blue-900">{staff2Data.totalPayable ? `₹${staff2Data.totalPayable.toLocaleString()}` : 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Payment Status</label>
+                  <p className={`text-sm font-semibold ${
+                    staff2Data.paymentStatus === 'paid' ? 'text-green-600' : 
+                    staff2Data.paymentStatus === 'pending' ? 'text-yellow-600' : 
+                    'text-gray-600'
+                  }`}>
+                    {staff2Data.paymentStatus ? staff2Data.paymentStatus.toUpperCase() : 'PENDING'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // For other form types (Trustee Details)
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Trustee Name</label>
+          <p className="text-sm text-gray-900">{staff2Data.trusteeName || 'Not provided'}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Trustee Address</label>
+          <p className="text-sm text-gray-900">{staff2Data.trusteeAddress || 'Not provided'}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Trustee Phone</label>
+          <p className="text-sm text-gray-900">{staff2Data.trusteePhone || 'Not provided'}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Trustee ID Number</label>
+          <p className="text-sm text-gray-900">{staff2Data.trusteeIdNumber || 'Not provided'}</p>
+        </div>
+      </div>
+    );
+  };
+
+  // Render Staff3 Section
+  const renderStaff3Section = () => {
+    const staff3Data = form?.staffSections?.staff3 || {};
+    const serviceType = form?.serviceType;
+
+    if (serviceType === 'sale-deed') {
+      return (
+        <div className="space-y-6">
+          {/* Property Description */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Property Description</h4>
+            <div className="border border-gray-200 rounded-lg p-4 bg-blue-50">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">State</label>
+                  <p className="text-sm text-gray-900">{staff3Data.state || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">District</label>
+                  <p className="text-sm text-gray-900">{staff3Data.district || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Tehsil</label>
+                  <p className="text-sm text-gray-900">{staff3Data.tehsil || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Village</label>
+                  <p className="text-sm text-gray-900">{staff3Data.village || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Khasra No.</label>
+                  <p className="text-sm text-gray-900">{staff3Data.khasraNo || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Plot No.</label>
+                  <p className="text-sm text-gray-900">{staff3Data.plotNo || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Colony Name</label>
+                  <p className="text-sm text-gray-900">{staff3Data.colonyName || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Ward No.</label>
+                  <p className="text-sm text-gray-900">{staff3Data.wardNo || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Street No.</label>
+                  <p className="text-sm text-gray-900">{staff3Data.streetNo || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Road Size</label>
+                  <p className="text-sm text-gray-900">{staff3Data.roadSize ? `${staff3Data.roadSize} ${staff3Data.roadUnit || 'meter'}` : 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Double Side Road</label>
+                  <p className="text-sm text-gray-900">{staff3Data.doubleSideRoad ? 'Yes' : 'No'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Property Directions */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Property Directions</h4>
+            <div className="border border-gray-200 rounded-lg p-4 bg-green-50">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">North (उत्तर)</label>
+                  <p className="text-sm text-gray-900">{staff3Data.directionNorth || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">East (पूर्व)</label>
+                  <p className="text-sm text-gray-900">{staff3Data.directionEast || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">South (दक्षिण)</label>
+                  <p className="text-sm text-gray-900">{staff3Data.directionSouth || 'Not provided'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">West (पश्चिम)</label>
+                  <p className="text-sm text-gray-900">{staff3Data.directionWest || 'Not provided'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // For other form types
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Land Owner</label>
+          <p className="text-sm text-gray-900">{staff3Data.landOwner || 'Not provided'}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Plot Number</label>
+          <p className="text-sm text-gray-900">{staff3Data.plotNumber || staff3Data.plotNo || 'Not provided'}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Land Location</label>
+          <p className="text-sm text-gray-900">{staff3Data.landLocation || 'Not provided'}</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Survey Number</label>
+          <p className="text-sm text-gray-900">{staff3Data.surveyNumber || staff3Data.khasraNo || 'Not provided'}</p>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -256,9 +736,85 @@ export default function Staff4FormDetailPage() {
               </div>
 
               <div className="px-6 py-4">
+                {/* Verification Summary - Show when viewing all sections */}
+                {activeTab === 'all' && (
+                  <div className="mb-8 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Cross-Verification Overview</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Staff1 Status */}
+                      <div className="bg-white rounded-lg p-4 border-2 border-blue-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">Staff1 Verification</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            getStaffVerificationStatus('staff1').color === 'green' ? 'bg-green-100 text-green-800' :
+                            getStaffVerificationStatus('staff1').color === 'red' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {getStaffVerificationStatus('staff1').status.toUpperCase()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600">Primary Details: Basic form info, sellers, buyers, witnesses</p>
+                        {form.approvals?.staff1?.verifiedAt && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Verified: {new Date(form.approvals.staff1.verifiedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Staff2 Status */}
+                      <div className="bg-white rounded-lg p-4 border-2 border-blue-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">Staff2 Verification</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            getStaffVerificationStatus('staff2').color === 'green' ? 'bg-green-100 text-green-800' :
+                            getStaffVerificationStatus('staff2').color === 'red' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {getStaffVerificationStatus('staff2').status.toUpperCase()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600">
+                          {form?.serviceType === 'sale-deed' 
+                            ? 'Seller/Buyer ID Verification & Payment Details' 
+                            : 'Trustee Details Verification'}
+                        </p>
+                        {form.approvals?.staff2?.verifiedAt && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Verified: {new Date(form.approvals.staff2.verifiedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Staff3 Status */}
+                      <div className="bg-white rounded-lg p-4 border-2 border-blue-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">Staff3 Verification</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            getStaffVerificationStatus('staff3').color === 'green' ? 'bg-green-100 text-green-800' :
+                            getStaffVerificationStatus('staff3').color === 'red' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {getStaffVerificationStatus('staff3').status.toUpperCase()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600">
+                          {form?.serviceType === 'sale-deed' 
+                            ? 'Property Description & Directions Verification' 
+                            : 'Land/Plot Details Verification'}
+                        </p>
+                        {form.approvals?.staff3?.verifiedAt && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Verified: {new Date(form.approvals.staff3.verifiedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Primary Details Section (Staff1) */}
                 {(activeTab === 'primary' || activeTab === 'all') && (
-                  <div className="mb-8">
+                  <div className={`mb-8 ${activeTab === 'all' ? 'border-l-4 border-blue-500 pl-4' : ''}`}>
                     <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                       <span className="mr-2">📝</span>
                       Primary Details (Staff1 Verification)
@@ -271,86 +827,16 @@ export default function Staff4FormDetailPage() {
                       </span>
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Applicant Name
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editableFields.applicantName || ''}
-                            onChange={(e) => handleFieldChange('applicantName', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.applicantName || 'Not provided'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Applicant Email
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="email"
-                            value={editableFields.applicantEmail || ''}
-                            onChange={(e) => handleFieldChange('applicantEmail', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.applicantEmail || 'Not provided'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Phone Number
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="tel"
-                            value={editableFields.phoneNumber || ''}
-                            onChange={(e) => handleFieldChange('phoneNumber', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.phoneNumber || 'Not provided'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Service Type
-                        </label>
-                        {isEditing ? (
-                          <select
-                            value={editableFields.serviceType || ''}
-                            onChange={(e) => handleFieldChange('serviceType', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          >
-                            <option value="">Select Service Type</option>
-                            <option value="property_registration">Property Registration</option>
-                            <option value="property_sale">Property Sale</option>
-                            <option value="property_transfer">Property Transfer</option>
-                            <option value="will_deed">Will Deed</option>
-                            <option value="trust_deed">Trust Deed</option>
-                          </select>
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.serviceType || 'Not provided'}</p>
-                        )}
-                      </div>
-                    </div>
+                    {renderStaff1Section()}
                   </div>
                 )}
 
                 {/* Trustee Details Section (Staff2) */}
                 {(activeTab === 'trustee' || activeTab === 'all') && (
-                  <div className="mb-8">
+                  <div className={`mb-8 ${activeTab === 'all' ? 'border-l-4 border-blue-500 pl-4' : ''}`}>
                     <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                       <span className="mr-2">👥</span>
-                      Trustee Details (Staff2 Verification)
+                      {form?.serviceType === 'sale-deed' ? 'Seller/Buyer & Payment Details' : 'Trustee Details'} (Staff2 Verification)
                       <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
                         getStaffVerificationStatus('staff2').color === 'green' ? 'bg-green-100 text-green-800' :
                         getStaffVerificationStatus('staff2').color === 'red' ? 'bg-red-100 text-red-800' :
@@ -360,80 +846,16 @@ export default function Staff4FormDetailPage() {
                       </span>
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Trustee Name
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editableFields.trusteeName || ''}
-                            onChange={(e) => handleFieldChange('trusteeName', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.trusteeName || 'Not provided'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Trustee Address
-                        </label>
-                        {isEditing ? (
-                          <textarea
-                            value={editableFields.trusteeAddress || ''}
-                            onChange={(e) => handleFieldChange('trusteeAddress', e.target.value)}
-                            rows={3}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.trusteeAddress || 'Not provided'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Trustee Phone
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="tel"
-                            value={editableFields.trusteePhone || ''}
-                            onChange={(e) => handleFieldChange('trusteePhone', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.trusteePhone || 'Not provided'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Trustee ID Number
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editableFields.trusteeIdNumber || ''}
-                            onChange={(e) => handleFieldChange('trusteeIdNumber', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.trusteeIdNumber || 'Not provided'}</p>
-                        )}
-                      </div>
-                    </div>
+                    {renderStaff2Section()}
                   </div>
                 )}
 
                 {/* Land Details Section (Staff3) */}
                 {(activeTab === 'land' || activeTab === 'all') && (
-                  <div className="mb-8">
+                  <div className={`mb-8 ${activeTab === 'all' ? 'border-l-4 border-blue-500 pl-4' : ''}`}>
                     <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                       <span className="mr-2">🏞️</span>
-                      Land Details (Staff3 Verification)
+                      Land/Plot Details (Staff3 Verification)
                       <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
                         getStaffVerificationStatus('staff3').color === 'green' ? 'bg-green-100 text-green-800' :
                         getStaffVerificationStatus('staff3').color === 'red' ? 'bg-red-100 text-red-800' :
@@ -443,71 +865,7 @@ export default function Staff4FormDetailPage() {
                       </span>
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Land Owner
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editableFields.landOwner || ''}
-                            onChange={(e) => handleFieldChange('landOwner', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.landOwner || 'Not provided'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Plot Number
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editableFields.plotNumber || ''}
-                            onChange={(e) => handleFieldChange('plotNumber', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.plotNumber || 'Not provided'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Land Location
-                        </label>
-                        {isEditing ? (
-                          <textarea
-                            value={editableFields.landLocation || ''}
-                            onChange={(e) => handleFieldChange('landLocation', e.target.value)}
-                            rows={3}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.landLocation || 'Not provided'}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Survey Number
-                        </label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editableFields.surveyNumber || ''}
-                            onChange={(e) => handleFieldChange('surveyNumber', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        ) : (
-                          <p className="text-sm text-gray-900">{form.data?.surveyNumber || 'Not provided'}</p>
-                        )}
-                      </div>
-                    </div>
+                    {renderStaff3Section()}
                   </div>
                 )}
 

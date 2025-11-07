@@ -6,9 +6,12 @@ import * as Yup from 'yup';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
+import { FormWorkflowProvider, useFormWorkflow } from './FormWorkflow/FormWorkflowProvider';
+import FormWorkflow from './FormWorkflow/FormWorkflow';
 
-const PropertySaleCertificateForm = () => {
+const PropertySaleCertificateFormContent = () => {
   const router = useRouter();
+  const { goToPreview } = useFormWorkflow();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initial form values
@@ -115,49 +118,31 @@ const PropertySaleCertificateForm = () => {
   });
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch('/api/property-sale-certificate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        toast.success('संपत्ति बिक्री प्रमाणपत्र सफलतापूर्वक जमा हो गया!');
-        resetForm();
-        router.push('/user');
-      } else {
-        const error = await response.json();
-        toast.error(error.message || 'प्रमाणपत्र जमा करने में त्रुटि हुई।');
-      }
-    } catch (error) {
-      console.error('Certificate submission error:', error);
-      toast.error('नेटवर्क त्रुटि। कृपया पुनः प्रयास करें।');
-    } finally {
-      setIsSubmitting(false);
-      setSubmitting(false);
-    }
+    // Instead of submitting directly, go to preview
+    const dataToSave = {
+      ...values,
+      amount: 1500,
+      formType: 'property-sale-certificate'
+    };
+    
+    goToPreview(dataToSave);
+    setSubmitting(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 w-full px-2 sm:px-4 lg:px-6 py-3">
+      <div className="w-full">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-3">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 sm:gap-3">
   <div>
               <h1 className="text-2xl font-bold text-gray-900">संपत्ति बिक्री प्रमाणपत्र (Property Sale Certificate)</h1>
-              <p className="text-sm text-gray-600 mt-1">Complete property sale certificate documentation for bank property transactions.</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5">Complete property sale certificate documentation for bank property transactions.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <button 
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-50"
                 disabled={isSubmitting}
                 form="property-sale-certificate-form"
               >
@@ -168,70 +153,70 @@ const PropertySaleCertificateForm = () => {
         </div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
           <Formik
             initialValues={initialValues}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
           >
             {({ isSubmitting }) => (
-              <Form id="property-sale-certificate-form" className="space-y-6">
+              <Form id="property-sale-certificate-form" className="space-y-3">
                 {/* Bank Information */}
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 pb-1.5 border-b border-gray-200">
                     बैंक की जानकारी (Bank Information)
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 sm:gap-3">
   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         बैंक का नाम <span className="text-red-500">*</span>
                       </label>
                       <Field
                         type="text"
                         name="bank_name"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="बैंक का नाम"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="बैंक नाम"
                       />
-                      <ErrorMessage name="bank_name" component="div" className="text-red-500 text-sm mt-1" />
+                      <ErrorMessage name="bank_name" component="div" className="text-red-500 text-xs mt-0.5" />
   </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         PAN नंबर <span className="text-red-500">*</span>
                       </label>
                       <Field
                         type="text"
                         name="bank_pan"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="PAN नंबर"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="PAN"
                       />
                       <ErrorMessage name="bank_pan" component="div" className="text-red-500 text-sm mt-1" />
       </div>
 
-                    <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="col-span-2 sm:col-span-4 md:col-span-5 lg:col-span-6 xl:col-span-8 2xl:col-span-10">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         पंजीकृत कार्यालय <span className="text-red-500">*</span>
                       </label>
                       <Field
                         as="textarea"
                         name="bank_reg_office"
-                        rows="2"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="पंजीकृत कार्यालय का पता"
+                        rows="1"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="पंजीकृत कार्यालय"
                       />
                       <ErrorMessage name="bank_reg_office" component="div" className="text-red-500 text-sm mt-1" />
         </div>
 
-                    <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="col-span-2 sm:col-span-4 md:col-span-5 lg:col-span-6 xl:col-span-8 2xl:col-span-10">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         मुख्य कार्यालय <span className="text-red-500">*</span>
                       </label>
                       <Field
                         as="textarea"
                         name="bank_head_office"
-                        rows="2"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="मुख्य कार्यालय का पता"
+                        rows="1"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="मुख्य कार्यालय"
                       />
                       <ErrorMessage name="bank_head_office" component="div" className="text-red-500 text-sm mt-1" />
         </div>
@@ -239,19 +224,19 @@ const PropertySaleCertificateForm = () => {
       </div>
 
                 {/* Bank Representative Information */}
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 pb-1.5 border-b border-gray-200">
                     बैंक प्रतिनिधि की जानकारी (Bank Representative Information)
         </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 sm:gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         शीर्षक
                       </label>
                       <Field
             as="select"
                         name="bank_rep_title"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="श्री">श्री</option>
                         <option value="श्रीमती">श्रीमती</option>
@@ -260,26 +245,26 @@ const PropertySaleCertificateForm = () => {
         </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         नाम <span className="text-red-500">*</span>
                       </label>
                       <Field
                         type="text"
                         name="bank_rep_name"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="प्रतिनिधि का नाम"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="प्रतिनिधि नाम"
                       />
                       <ErrorMessage name="bank_rep_name" component="div" className="text-red-500 text-sm mt-1" />
         </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         संबंध
                       </label>
                       <Field
                         as="select"
                         name="bank_rep_relation"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="पुत्र">पुत्र</option>
                         <option value="पुत्री">पुत्री</option>
@@ -289,66 +274,66 @@ const PropertySaleCertificateForm = () => {
         </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         पिता का नाम <span className="text-red-500">*</span>
                       </label>
                       <Field
                         type="text"
                         name="bank_rep_father_name"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="पिता का नाम"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="पिता/पति"
                       />
                       <ErrorMessage name="bank_rep_father_name" component="div" className="text-red-500 text-sm mt-1" />
             </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         व्यवसाय
                       </label>
                       <Field
                         type="text"
                         name="bank_rep_occupation"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="व्यवसाय"
                       />
             </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         मोबाइल नंबर <span className="text-red-500">*</span>
                       </label>
                       <Field
                         type="text"
                         name="bank_rep_mobile"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="10 अंकों का मोबाइल नंबर"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="मोबाइल"
                       />
                       <ErrorMessage name="bank_rep_mobile" component="div" className="text-red-500 text-sm mt-1" />
           </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         ईमेल <span className="text-red-500">*</span>
             </label>
                       <Field
                         type="email"
                         name="bank_rep_email"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="ईमेल पता"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="ईमेल"
                       />
                       <ErrorMessage name="bank_rep_email" component="div" className="text-red-500 text-sm mt-1" />
         </div>
 
-                    <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="col-span-2 sm:col-span-4 md:col-span-5 lg:col-span-6 xl:col-span-8 2xl:col-span-10">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         पता <span className="text-red-500">*</span>
                       </label>
                       <Field
                         as="textarea"
                         name="bank_rep_address"
                         rows="3"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="प्रतिनिधि का पूरा पता"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="पता"
                       />
                       <ErrorMessage name="bank_rep_address" component="div" className="text-red-500 text-sm mt-1" />
           </div>
@@ -356,19 +341,19 @@ const PropertySaleCertificateForm = () => {
       </div>
 
                 {/* Property Information */}
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 pb-1.5 border-b border-gray-200">
                     संपत्ति की जानकारी (Property Information)
         </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 sm:gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         संपत्ति का प्रकार <span className="text-red-500">*</span>
                       </label>
                       <Field
                         as="select"
                         name="property_type"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">चुनें</option>
                         <option value="residential">आवासीय (Residential)</option>
@@ -380,26 +365,26 @@ const PropertySaleCertificateForm = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         क्षेत्रफल <span className="text-red-500">*</span>
                       </label>
                       <Field
             type="number"
                         name="property_area"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="क्षेत्रफल"
                       />
                       <ErrorMessage name="property_area" component="div" className="text-red-500 text-sm mt-1" />
       </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         इकाई
                       </label>
                       <Field
             as="select"
                         name="property_unit"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="sq_meters">वर्ग मीटर</option>
                         <option value="sq_feet">वर्ग फीट</option>
@@ -409,28 +394,28 @@ const PropertySaleCertificateForm = () => {
                     </div>
 
           <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         संपत्ति का मूल्य (₹) <span className="text-red-500">*</span>
                 </label>
                       <Field
                         type="number"
                         name="property_value"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="संपत्ति का मूल्य"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="मूल्य"
                       />
                       <ErrorMessage name="property_value" component="div" className="text-red-500 text-sm mt-1" />
             </div>
 
-                    <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="col-span-2 sm:col-span-4 md:col-span-5 lg:col-span-6 xl:col-span-8 2xl:col-span-10">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         संपत्ति का पता <span className="text-red-500">*</span>
                       </label>
                       <Field
                         as="textarea"
                         name="property_address"
                         rows="3"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="संपत्ति का पूरा पता"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="संपत्ति पता"
                       />
                       <ErrorMessage name="property_address" component="div" className="text-red-500 text-sm mt-1" />
           </div>
@@ -438,44 +423,44 @@ const PropertySaleCertificateForm = () => {
       </div>
 
                 {/* Sale Information */}
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 pb-1.5 border-b border-gray-200">
                     बिक्री की जानकारी (Sale Information)
         </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 sm:gap-3">
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         बिक्री राशि (₹) <span className="text-red-500">*</span>
                       </label>
                       <Field
                         type="number"
                         name="sale_amount"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="बिक्री राशि"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="राशि"
                       />
                       <ErrorMessage name="sale_amount" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         बिक्री तिथि <span className="text-red-500">*</span>
                       </label>
                       <Field
                         type="date"
                         name="sale_date"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       />
                       <ErrorMessage name="sale_date" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         बिक्री का तरीका
                       </label>
                       <Field
                         as="select"
                         name="sale_mode"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">चुनें</option>
                         <option value="auction">नीलामी (Auction)</option>
@@ -484,15 +469,15 @@ const PropertySaleCertificateForm = () => {
                       </Field>
                 </div>
 
-                    <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="col-span-2 sm:col-span-4 md:col-span-5 lg:col-span-6 xl:col-span-8 2xl:col-span-10">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         बिक्री राशि शब्दों में <span className="text-red-500">*</span>
                       </label>
                       <Field
                   type="text"
                         name="sale_amount_words"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="बिक्री राशि शब्दों में"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="शब्दों में"
                       />
                       <ErrorMessage name="sale_amount_words" component="div" className="text-red-500 text-sm mt-1" />
               </div>
@@ -500,85 +485,85 @@ const PropertySaleCertificateForm = () => {
                 </div>
 
                 {/* Purchaser Information */}
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 pb-1.5 border-b border-gray-200">
                     खरीदार की जानकारी (Purchaser Information)
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 sm:gap-3">
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         नाम <span className="text-red-500">*</span>
                       </label>
                       <Field
                     type="text"
                         name="purchaser_name"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="खरीदार का नाम"
                       />
                       <ErrorMessage name="purchaser_name" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         पिता का नाम <span className="text-red-500">*</span>
                       </label>
                       <Field
                     type="text"
                         name="purchaser_father_name"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="पिता का नाम"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="पिता/पति"
                       />
                       <ErrorMessage name="purchaser_father_name" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         मोबाइल नंबर <span className="text-red-500">*</span>
                       </label>
                       <Field
                     type="text"
                         name="purchaser_mobile"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="10 अंकों का मोबाइल नंबर"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="मोबाइल"
                       />
                       <ErrorMessage name="purchaser_mobile" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         आधार नंबर <span className="text-red-500">*</span>
                       </label>
                       <Field
                     type="text"
                         name="purchaser_aadhaar"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="12 अंकों का आधार नंबर"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="आधार"
                       />
                       <ErrorMessage name="purchaser_aadhaar" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                 <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         PAN नंबर
                       </label>
                       <Field
                         type="text"
                         name="purchaser_pan"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="PAN नंबर"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="PAN"
                   />
                 </div>
 
-                    <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="col-span-2 sm:col-span-4 md:col-span-5 lg:col-span-6 xl:col-span-8 2xl:col-span-10">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         पता <span className="text-red-500">*</span>
                       </label>
                       <Field
                         as="textarea"
                         name="purchaser_address"
                         rows="3"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="खरीदार का पूरा पता"
+                        className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="पता"
                       />
                       <ErrorMessage name="purchaser_address" component="div" className="text-red-500 text-sm mt-1" />
             </div>
@@ -586,8 +571,8 @@ const PropertySaleCertificateForm = () => {
       </div>
 
                 {/* Witness Information */}
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 pb-1.5 border-b border-gray-200">
                     गवाहों की जानकारी (Witness Information)
         </h2>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -596,54 +581,54 @@ const PropertySaleCertificateForm = () => {
                       <h3 className="text-md font-medium text-gray-800 mb-3">पहला गवाह (Witness 1)</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
                             नाम <span className="text-red-500">*</span>
                           </label>
                           <Field
                     type="text"
                             name="witness1_name"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="गवाह का नाम"
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="गवाह नाम"
                           />
                           <ErrorMessage name="witness1_name" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                 <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
                             पिता का नाम <span className="text-red-500">*</span>
                           </label>
                           <Field
                     type="text"
                             name="witness1_father_name"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="पिता का नाम"
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="पिता/पति"
                           />
                           <ErrorMessage name="witness1_father_name" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                 <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
                             मोबाइल नंबर <span className="text-red-500">*</span>
                           </label>
                           <Field
                     type="text"
                             name="witness1_mobile"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="10 अंकों का मोबाइल नंबर"
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="मोबाइल"
                           />
                           <ErrorMessage name="witness1_mobile" component="div" className="text-red-500 text-sm mt-1" />
       </div>
 
                         <div className="sm:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
                             पता <span className="text-red-500">*</span>
                           </label>
                           <Field
             as="textarea"
                             name="witness1_address"
-                            rows="2"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="गवाह का पता"
+                            rows="1"
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="पता"
           />
                           <ErrorMessage name="witness1_address" component="div" className="text-red-500 text-sm mt-1" />
         </div>
@@ -655,54 +640,54 @@ const PropertySaleCertificateForm = () => {
                       <h3 className="text-md font-medium text-gray-800 mb-3">दूसरा गवाह (Witness 2)</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
                             नाम <span className="text-red-500">*</span>
                           </label>
                           <Field
                     type="text"
                             name="witness2_name"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="गवाह का नाम"
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="गवाह नाम"
                           />
                           <ErrorMessage name="witness2_name" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                 <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
                             पिता का नाम <span className="text-red-500">*</span>
                           </label>
                           <Field
                   type="text"
                             name="witness2_father_name"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="पिता का नाम"
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="पिता/पति"
                           />
                           <ErrorMessage name="witness2_father_name" component="div" className="text-red-500 text-sm mt-1" />
               </div>
 
                 <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
                             मोबाइल नंबर <span className="text-red-500">*</span>
                           </label>
                           <Field
                     type="text"
                             name="witness2_mobile"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="10 अंकों का मोबाइल नंबर"
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="मोबाइल"
                           />
                           <ErrorMessage name="witness2_mobile" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
                         <div className="sm:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
                             पता <span className="text-red-500">*</span>
                           </label>
                           <Field
                             as="textarea"
                             name="witness2_address"
-                            rows="2"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="गवाह का पता"
+                            rows="1"
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="पता"
                           />
                           <ErrorMessage name="witness2_address" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
@@ -712,11 +697,11 @@ const PropertySaleCertificateForm = () => {
       </div>
 
                 {/* Submit Button */}
-                <div className="flex justify-center pt-6">
+                <div className="flex justify-center pt-3">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? 'जमा हो रहा है...' : 'संपत्ति बिक्री प्रमाणपत्र जमा करें'}
                   </button>
@@ -728,6 +713,25 @@ const PropertySaleCertificateForm = () => {
         <ToastContainer />
               </div>
     </div>
+  );
+};
+
+const PropertySaleCertificateForm = () => {
+  return (
+    <FormWorkflowProvider formType="property-sale-certificate">
+      <FormWorkflow 
+        formTitle="Property Sale Certificate"
+        formType="property-sale-certificate"
+        fields={[
+          { name: 'bank_name', label: 'Bank Name' },
+          { name: 'bank_rep_name', label: 'Bank Representative Name' },
+          { name: 'property_address', label: 'Property Address' },
+          { name: 'sale_amount', label: 'Sale Amount' },
+        ]}
+      >
+        <PropertySaleCertificateFormContent />
+      </FormWorkflow>
+    </FormWorkflowProvider>
   );
 };
 

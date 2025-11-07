@@ -1,119 +1,131 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Staff5ReportsPage() {
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({
-    page: 1,
-    limit: 10,
-    status: '',
-    formType: '',
-    search: '',
-    dateFrom: '',
-    dateTo: ''
+  const [report, setReport] = useState({
+    date: new Date().toISOString().split('T')[0],
+    formsApproved: [],
+    formsRejected: [],
+    totalFormsProcessed: 0,
+    finalNotes: '',
+    recommendations: ''
   });
-  const [pagination, setPagination] = useState({});
-  const [generatingReport, setGeneratingReport] = useState(false);
-  const { getAuthHeaders } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+  const { getAuthHeaders, user } = useAuth();
 
   useEffect(() => {
-    fetchReports();
-  }, [filters]);
+    fetchTodayWorkData();
+  }, [report.date]);
 
-  const fetchReports = async () => {
+  const fetchTodayWorkData = async () => {
     try {
       setLoading(true);
-      const queryParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) queryParams.append(key, value);
-      });
-
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
-      const response = await fetch(`${API_BASE}/api/staff/5/final-reports?${queryParams}`, {
+      
+      // Fetch today's work data
+      const response = await fetch(`${API_BASE}/api/staff/5/work-data?date=${report.date}`, {
         headers: getAuthHeaders()
       });
 
       if (response.ok) {
         const data = await response.json();
-        setReports(data.data.reports);
-        setPagination(data.data.pagination);
-      } else {
-        throw new Error('Failed to fetch reports');
+        setReport(prev => ({
+          ...prev,
+          formsApproved: data.data.formsApproved || [],
+          formsRejected: data.data.formsRejected || [],
+          totalFormsProcessed: data.data.totalFormsProcessed || 0
+        }));
       }
     } catch (error) {
-      console.error('Error fetching reports:', error);
-      setError(error.message);
+      console.error('Error fetching work data:', error);
+      setError('Failed to fetch work data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
+  const handleInputChange = (field, value) => {
+    setReport(prev => ({
       ...prev,
-      [key]: value,
-      page: 1
+      [field]: value
     }));
   };
 
-  const handlePageChange = (newPage) => {
-    setFilters(prev => ({ ...prev, page: newPage }));
-  };
-
-  const handleGenerateReport = async (formId) => {
-    try {
-      setGeneratingReport(true);
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
-      const response = await fetch(`${API_BASE}/api/staff/5/generate-final-report/${formId}`, {
-        method: 'POST',
-        headers: getAuthHeaders()
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `final-report-${formId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        throw new Error('Failed to generate report');
-      }
-    } catch (error) {
-      console.error('Error generating report:', error);
-      alert('Failed to generate report');
-    } finally {
-      setGeneratingReport(false);
+  const handleFormToggle = (formId, type) => {
+    if (type === 'approved') {
+      setReport(prev => ({
+        ...prev,
+        formsApproved: prev.formsApproved.includes(formId)
+          ? prev.formsApproved.filter(id => id !== formId)
+          : [...prev.formsApproved, formId]
+      }));
+    } else if (type === 'rejected') {
+      setReport(prev => ({
+        ...prev,
+        formsRejected: prev.formsRejected.includes(formId)
+          ? prev.formsRejected.filter(id => id !== formId)
+          : [...prev.formsRejected, formId]
+      }));
     }
   };
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      'generated': 'bg-green-100 text-green-800',
-      'pending': 'bg-yellow-100 text-yellow-800',
-      'failed': 'bg-red-100 text-red-800'
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusConfig[status] || 'bg-gray-100 text-gray-800'}`}>
-        {status?.toUpperCase() || 'UNKNOWN'}
-      </span>
-    );
+    if (report.formsApproved.length === 0 && report.formsRejected.length === 0) {
+      alert('Please select at least one form that was processed today.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+      
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
+      const response = await fetch(`${API_BASE}/api/staff/5/final-report`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(report)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuccess(true);
+        setReport({
+          date: new Date().toISOString().split('T')[0],
+          formsApproved: [],
+          formsRejected: [],
+          totalFormsProcessed: 0,
+          finalNotes: '',
+          recommendations: ''
+        });
+        // Refetch work data after submission
+        setTimeout(() => {
+          fetchTodayWorkData();
+          setSuccess(false);
+        }, 2000);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit final report');
+      }
+    } catch (error) {
+      console.error('Error submitting final report:', error);
+      setError(error.message || 'Failed to submit final report');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (loading) {
+  if (loading && report.formsApproved.length === 0 && report.formsRejected.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading final reports...</p>
+          <p className="mt-4 text-gray-600">Loading work data...</p>
         </div>
       </div>
     );
@@ -121,207 +133,184 @@ export default function Staff5ReportsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Final Reports</h1>
-          <p className="text-gray-600">Generate and manage final reports for locked forms</p>
+          <h1 className="text-2xl font-bold text-gray-900">Final Report</h1>
+          <p className="text-gray-600">Submit your daily final report for locked forms</p>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                <option value="">All Status</option>
-                <option value="generated">Generated</option>
-                <option value="pending">Pending</option>
-                <option value="failed">Failed</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Form Type</label>
-              <select
-                value={filters.formType}
-                onChange={(e) => handleFilterChange('formType', e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                <option value="">All Types</option>
-                <option value="property_registration">Property Registration</option>
-                <option value="property_sale">Property Sale</option>
-                <option value="property_transfer">Property Transfer</option>
-                <option value="will_deed">Will Deed</option>
-                <option value="trust_deed">Trust Deed</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Date From</label>
-              <input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Date To</label>
-              <input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Reports List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Final Reports ({pagination.total || 0})</h2>
-          </div>
-
-          {error && (
-            <div className="px-6 py-4 bg-red-50 border-l-4 border-red-400">
-              <p className="text-red-700">{error}</p>
-            </div>
-          )}
-
-          {reports.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <div className="text-gray-400 text-6xl mb-4">📋</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No reports found</h3>
-              <p className="text-gray-500">No final reports have been generated yet.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {reports.map((report) => (
-                <div key={report._id} className="px-6 py-4 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-sm font-medium text-gray-900">
-                          {report.formType?.replace(/_/g, ' ').toUpperCase() || 'FORM'} Report
-                        </h3>
-                        {getStatusBadge(report.status)}
-                      </div>
-                      
-                      <div className="mt-2 text-sm text-gray-500">
-                        <p>Form ID: {report.formId}</p>
-                        <p>Generated: {new Date(report.generatedAt).toLocaleString()}</p>
-                        {report.fileSize && (
-                          <p>File Size: {(report.fileSize / 1024).toFixed(2)} KB</p>
-                        )}
-                      </div>
-
-                      {/* Report Summary */}
-                      <div className="mt-3 text-sm">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <span className="font-medium text-gray-700">Final Decision:</span>
-                            <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                              report.finalDecision === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {report.finalDecision?.toUpperCase() || 'UNKNOWN'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-700">Staff5 Remarks:</span>
-                            <span className="ml-2 text-gray-600">{report.finalRemarks || 'None'}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Verification Summary */}
-                      {report.verificationSummary && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Verification Summary:</p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                            <div>
-                              <span className="text-gray-600">Staff1:</span>
-                              <span className={`ml-1 ${report.verificationSummary.staff1 ? 'text-green-600' : 'text-red-600'}`}>
-                                {report.verificationSummary.staff1 ? '✓' : '✗'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Staff2:</span>
-                              <span className={`ml-1 ${report.verificationSummary.staff2 ? 'text-green-600' : 'text-red-600'}`}>
-                                {report.verificationSummary.staff2 ? '✓' : '✗'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Staff3:</span>
-                              <span className={`ml-1 ${report.verificationSummary.staff3 ? 'text-green-600' : 'text-red-600'}`}>
-                                {report.verificationSummary.staff3 ? '✓' : '✗'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Staff4:</span>
-                              <span className={`ml-1 ${report.verificationSummary.staff4 ? 'text-green-600' : 'text-red-600'}`}>
-                                {report.verificationSummary.staff4 ? '✓' : '✗'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      {report.status === 'generated' ? (
-                        <button
-                          onClick={() => handleGenerateReport(report.formId)}
-                          disabled={generatingReport}
-                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {generatingReport ? 'Generating...' : '📄 Download PDF'}
-                        </button>
-                      ) : (
-                        <span className="text-sm text-gray-500">
-                          {report.status === 'pending' ? 'Generating...' : 'Failed to generate'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Pagination */}
-          {pagination.pages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  Showing {((pagination.current - 1) * pagination.limit) + 1} to {Math.min(pagination.current * pagination.limit, pagination.total)} of {pagination.total} results
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handlePageChange(pagination.current - 1)}
-                    disabled={pagination.current <= 1}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => handlePageChange(pagination.current + 1)}
-                    disabled={pagination.current >= pagination.pages}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
+        {success && (
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="text-green-400">✓</span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium">Final report submitted successfully!</p>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="text-red-400">✗</span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Report Date */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Report Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Report Date
+                </label>
+                <input
+                  type="date"
+                  value={report.date}
+                  onChange={(e) => handleInputChange('date', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Staff Member
+                </label>
+                <input
+                  type="text"
+                  value={user?.name || 'Staff5 User'}
+                  disabled
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-50 text-gray-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Final Approval Statistics */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Final Approval Statistics</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{report.formsApproved.length}</div>
+                <div className="text-sm text-gray-600">Forms Approved</div>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-lg">
+                <div className="text-2xl font-bold text-red-600">{report.formsRejected.length}</div>
+                <div className="text-sm text-gray-600">Forms Rejected</div>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{report.totalFormsProcessed}</div>
+                <div className="text-sm text-gray-600">Total Processed</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Forms Processed */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Forms Processed Today</h2>
+            
+            {/* Approved Forms */}
+            <div className="mb-6">
+              <h3 className="text-md font-medium text-gray-700 mb-3">Approved/Locked Forms</h3>
+              <div className="space-y-2">
+                {report.formsApproved.length > 0 ? (
+                  report.formsApproved.map((formId, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <span className="text-sm text-gray-900">Form ID: {formId}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleFormToggle(formId, 'approved')}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No forms marked as approved</p>
+                )}
+              </div>
+            </div>
+
+            {/* Rejected Forms */}
+            <div className="mb-6">
+              <h3 className="text-md font-medium text-gray-700 mb-3">Rejected Forms</h3>
+              <div className="space-y-2">
+                {report.formsRejected.length > 0 ? (
+                  report.formsRejected.map((formId, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                      <span className="text-sm text-gray-900">Form ID: {formId}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleFormToggle(formId, 'rejected')}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No forms marked as rejected</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Final Notes and Recommendations */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Notes & Recommendations</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Final Notes
+                </label>
+                <textarea
+                  value={report.finalNotes}
+                  onChange={(e) => handleInputChange('finalNotes', e.target.value)}
+                  rows={4}
+                  placeholder="Describe your final approval findings and any important notes..."
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Recommendations
+                </label>
+                <textarea
+                  value={report.recommendations}
+                  onChange={(e) => handleInputChange('recommendations', e.target.value)}
+                  rows={3}
+                  placeholder="Any recommendations for improving the final approval process..."
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={submitting || (report.formsApproved.length === 0 && report.formsRejected.length === 0)}
+              className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? 'Submitting...' : 'Submit Final Report'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

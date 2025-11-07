@@ -251,7 +251,19 @@ class StaffReportController {
       };
 
       const reports = await StaffReport.getAllReports(filters);
-      const totalReports = await StaffReport.countDocuments(filters);
+      
+      // Build query for countDocuments
+      const countQuery = {};
+      if (filters.staffId) countQuery.staffId = filters.staffId;
+      if (filters.formType) countQuery.formType = filters.formType;
+      if (filters.verificationStatus) countQuery.verificationStatus = filters.verificationStatus;
+      if (filters.isSubmitted !== undefined) countQuery.isSubmitted = filters.isSubmitted;
+      if (filters.dateFrom || filters.dateTo) {
+        countQuery.createdAt = {};
+        if (filters.dateFrom) countQuery.createdAt.$gte = new Date(filters.dateFrom);
+        if (filters.dateTo) countQuery.createdAt.$lte = new Date(filters.dateTo);
+      }
+      const totalReports = await StaffReport.countDocuments(countQuery);
 
       res.status(200).json({
         status: 'success',
@@ -393,6 +405,72 @@ class StaffReportController {
       res.status(500).json({
         status: 'failed',
         message: 'Unable to update report, please try again later'
+      });
+    }
+  };
+
+  // Admin: Verify or reject a staff report
+  static reviewReport = async (req, res) => {
+    try {
+      const { reportId } = req.params;
+      const { approved, reviewNotes } = req.body;
+      const adminId = req.user._id;
+      const userRole = req.user.role;
+
+      // Only admin can review reports
+      if (userRole !== 'admin') {
+        return res.status(403).json({
+          status: 'failed',
+          message: 'Only admins can review staff reports'
+        });
+      }
+
+      const report = await StaffReport.findById(reportId);
+      if (!report) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'Report not found'
+        });
+      }
+
+      // Update report with admin review
+      report.verificationStatus = approved ? 'verified' : 'rejected';
+      report.reviewedBy = adminId;
+      report.reviewedAt = new Date();
+      if (reviewNotes) {
+        report.reviewNotes = reviewNotes;
+      }
+
+      await report.save();
+
+      // Log the action
+      await AuditLog.logAction({
+        userId: adminId,
+        userRole: userRole,
+        action: 'admin_review_report',
+        resource: 'staff_report',
+        resourceId: report._id,
+        details: {
+          reportType: report.formType,
+          staffId: report.staffId,
+          action: approved ? 'verified' : 'rejected',
+          reviewNotes: reviewNotes
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(200).json({
+        status: 'success',
+        message: `Report ${approved ? 'verified' : 'rejected'} successfully`,
+        data: { report }
+      });
+
+    } catch (error) {
+      logger.error('Review report error:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Unable to review report, please try again later'
       });
     }
   };

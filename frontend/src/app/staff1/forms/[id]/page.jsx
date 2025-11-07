@@ -32,7 +32,8 @@ export default function Staff1FormDetailPage() {
         const data = await response.json();
         setForm(data.data.form);
       } else {
-        throw new Error('Failed to fetch form details');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch form details');
       }
     } catch (error) {
       console.error('Error fetching form details:', error);
@@ -218,16 +219,25 @@ export default function Staff1FormDetailPage() {
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(form.fields || {}).map(([key, value]) => (
-              <div key={key} className="border-b border-gray-100 pb-4">
-                <h3 className="text-sm font-medium text-gray-500 mb-1">
-                  {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                </h3>
-                <div className="text-sm text-gray-900">
-                  {renderFieldValue(key, value)}
+            {Object.entries(form.allFields || form.fields || form.data || {}).map(([key, value]) => {
+              // Skip internal MongoDB/formsData fields
+              if (key.startsWith('_') || key === '__v' || key === 'createdAt' || key === 'updatedAt' || 
+                  key === 'userId' || key === 'formId' || key === 'serviceType' || key === 'status' ||
+                  key === 'approvals' || key === 'adminNotes' || key === 'fields' || key === 'data' ||
+                  key === 'rawFormData' || key === 'originalFormData' || key === 'allFields') {
+                return null;
+              }
+              return (
+                <div key={key} className="border-b border-gray-100 pb-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">
+                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  </h3>
+                  <div className="text-sm text-gray-900">
+                    {renderFieldValue(key, value)}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

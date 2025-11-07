@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function Staff3WorkReportPage() {
+export default function Staff5WorkReportPage() {
   const { getAuthHeaders } = useAuth();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function Staff3WorkReportPage() {
       });
 
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
-      const response = await fetch(`${API_BASE}/api/staff/3/reports?${queryParams}`, {
+      const response = await fetch(`${API_BASE}/api/staff/5/reports?${queryParams}`, {
         headers: getAuthHeaders()
       });
 
@@ -72,7 +72,7 @@ export default function Staff3WorkReportPage() {
         ...getAuthHeaders(),
         'Content-Type': 'application/json'
       };
-      const response = await fetch(`${API_BASE}/api/staff/3/reports`, {
+      const response = await fetch(`${API_BASE}/api/staff/5/reports`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(newReport)
@@ -132,16 +132,16 @@ export default function Staff3WorkReportPage() {
   };
 
   const commonTasks = [
-    'Land Details Verification',
-    'Plot Details Verification',
-    'Property Boundaries Check',
-    'Area Measurement Verification',
-    'Documents Review',
-    'Form Correction',
-    'Form Verification',
-    'Data Entry',
-    'Quality Check',
-    'Client Communication'
+    'Final Approval Review',
+    'Form Locking',
+    'Certificate Generation',
+    'Final Report Generation',
+    'Document Finalization',
+    'Quality Assurance',
+    'Process Completion',
+    'Client Notifications',
+    'Record Archiving',
+    'System Updates'
   ];
 
   return (
@@ -157,7 +157,7 @@ export default function Staff3WorkReportPage() {
           </div>
           <button
             onClick={() => setShowNewReportForm(!showNewReportForm)}
-            className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -190,7 +190,7 @@ export default function Staff3WorkReportPage() {
                       type="checkbox"
                       checked={newReport.completedTasks.includes(task)}
                       onChange={() => handleTaskToggle(task)}
-                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                     />
                     <span className="text-sm text-gray-700">{task}</span>
                   </label>
@@ -207,7 +207,7 @@ export default function Staff3WorkReportPage() {
                 value={newReport.workSummary}
                 onChange={(e) => setNewReport(prev => ({ ...prev, workSummary: e.target.value }))}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Provide a detailed summary of your work today..."
               />
             </div>
@@ -221,7 +221,7 @@ export default function Staff3WorkReportPage() {
                 type="number"
                 value={newReport.formsProcessed}
                 onChange={(e) => setNewReport(prev => ({ ...prev, formsProcessed: parseInt(e.target.value) || 0 }))}
-                className="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="0"
                 min="0"
               />
@@ -236,7 +236,7 @@ export default function Staff3WorkReportPage() {
                 value={newReport.issuesEncountered}
                 onChange={(e) => setNewReport(prev => ({ ...prev, issuesEncountered: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Describe any issues or challenges faced today..."
               />
             </div>
@@ -250,7 +250,7 @@ export default function Staff3WorkReportPage() {
                 value={newReport.recommendations}
                 onChange={(e) => setNewReport(prev => ({ ...prev, recommendations: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Any recommendations for process improvements..."
               />
             </div>
@@ -273,7 +273,7 @@ export default function Staff3WorkReportPage() {
               <button
                 onClick={handleSubmitReport}
                 disabled={submitting || !newReport.workSummary.trim()}
-                className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
               >
                 {submitting ? (
                   <>
@@ -319,7 +319,7 @@ export default function Staff3WorkReportPage() {
             <select
               value={filters.status}
               onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value, page: 1 }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
               <option value="">All Status</option>
               <option value="pending">Pending</option>
@@ -333,7 +333,7 @@ export default function Staff3WorkReportPage() {
             <select
               value={filters.limit}
               onChange={(e) => setFilters(prev => ({ ...prev, limit: parseInt(e.target.value), page: 1 }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
@@ -343,7 +343,7 @@ export default function Staff3WorkReportPage() {
           <div className="flex items-end">
             <button
               onClick={fetchReports}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
               Refresh
             </button>
@@ -361,7 +361,7 @@ export default function Staff3WorkReportPage() {
 
         {loading ? (
           <div className="p-6 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
             <p className="mt-2 text-gray-600">Loading reports...</p>
           </div>
         ) : reports.length === 0 ? (
@@ -373,7 +373,7 @@ export default function Staff3WorkReportPage() {
             <p className="text-gray-600 mb-4">You haven't submitted any work reports yet.</p>
             <button
               onClick={() => setShowNewReportForm(true)}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
               Submit Your First Report
             </button>

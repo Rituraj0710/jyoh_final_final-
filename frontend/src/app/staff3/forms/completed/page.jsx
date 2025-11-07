@@ -10,7 +10,7 @@ export default function Staff3CompletedFormsPage() {
   const [filters, setFilters] = useState({
     page: 1,
     limit: 10,
-    status: 'verified',
+    status: '', // Don't filter by status for completed forms - show all verified forms
     formType: '',
     search: ''
   });
@@ -25,9 +25,20 @@ export default function Staff3CompletedFormsPage() {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
+      // Always add completed=true to fetch verified forms
+      queryParams.append('completed', 'true');
+      
+      // Add other filters (but override status if needed)
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) queryParams.append(key, value);
+        if (value && key !== 'status') {
+          queryParams.append(key, value);
+        }
       });
+      
+      // Add formType as serviceType for backend
+      if (filters.formType) {
+        queryParams.set('formType', filters.formType);
+      }
 
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
       const response = await fetch(`${API_BASE}/api/staff/3/forms?${queryParams}`, {
@@ -109,20 +120,6 @@ export default function Staff3CompletedFormsPage() {
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              >
-                <option value="verified">Verified</option>
-                <option value="needs_correction">Needs Correction</option>
-                <option value="under_review">Under Review</option>
-                <option value="">All Status</option>
-              </select>
-            </div>
-
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Form Type</label>
               <select
                 value={filters.formType}
@@ -130,11 +127,13 @@ export default function Staff3CompletedFormsPage() {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
               >
                 <option value="">All Types</option>
-                <option value="property_registration">Property Registration</option>
-                <option value="property_sale">Property Sale</option>
-                <option value="property_transfer">Property Transfer</option>
-                <option value="will_deed">Will Deed</option>
-                <option value="trust_deed">Trust Deed</option>
+                <option value="sale-deed">Sale Deed</option>
+                <option value="will-deed">Will Deed</option>
+                <option value="trust-deed">Trust Deed</option>
+                <option value="property-registration">Property Registration</option>
+                <option value="property-sale-certificate">Property Sale Certificate</option>
+                <option value="power-of-attorney">Power of Attorney</option>
+                <option value="adoption-deed">Adoption Deed</option>
               </select>
             </div>
 
@@ -177,25 +176,56 @@ export default function Staff3CompletedFormsPage() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         <h3 className="text-sm font-medium text-gray-900">
-                          {form.formType?.replace('_', ' ').toUpperCase() || 'FORM'}
+                          {form.serviceType ? form.serviceType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : (form.formType?.replace('_', ' ').toUpperCase() || 'FORM')}
                         </h3>
                         {getStatusBadge(form.status)}
-                        {getVerificationTypeBadge(form.verificationType || 'land')}
+                        {getVerificationTypeBadge(form.approvals?.staff3?.verificationType || form.verificationType || 'land')}
                       </div>
                       
                       <div className="mt-2 text-sm text-gray-500">
-                        <p>Form ID: {form._id}</p>
+                        <p><strong>Form ID:</strong> {form._id}</p>
                         {form.userId && (
-                          <p>Submitted by: {form.userId.name || form.userId.email}</p>
+                          <p><strong>Submitted by:</strong> {form.userId.name || form.userId.email}</p>
                         )}
-                        <p>Completed: {new Date(form.updatedAt).toLocaleDateString()}</p>
                         {form.approvals?.staff3?.verifiedAt && (
-                          <p>Verified at: {new Date(form.approvals.staff3.verifiedAt).toLocaleString()}</p>
+                          <p><strong>Verified at:</strong> {new Date(form.approvals.staff3.verifiedAt).toLocaleString()}</p>
+                        )}
+                        {form.data?.state && (
+                          <p><strong>Location:</strong> {form.data.state}, {form.data.district}, {form.data.village}</p>
                         )}
                       </div>
 
-                      {/* Form Details Preview */}
-                      {form.data && (
+                      {/* Property Description & Directions Preview (for sale-deed) */}
+                      {form.serviceType === 'sale-deed' && form.data && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Property Description:</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                            {form.data.state && <div><strong>State:</strong> {form.data.state}</div>}
+                            {form.data.district && <div><strong>District:</strong> {form.data.district}</div>}
+                            {form.data.tehsil && <div><strong>Tehsil:</strong> {form.data.tehsil}</div>}
+                            {form.data.village && <div><strong>Village:</strong> {form.data.village}</div>}
+                            {form.data.khasraNo && <div><strong>Khasra No:</strong> {form.data.khasraNo}</div>}
+                            {form.data.plotNo && <div><strong>Plot No:</strong> {form.data.plotNo}</div>}
+                            {form.data.colonyName && <div><strong>Colony:</strong> {form.data.colonyName}</div>}
+                            {form.data.wardNo && <div><strong>Ward:</strong> {form.data.wardNo}</div>}
+                            {form.data.streetNo && <div><strong>Street:</strong> {form.data.streetNo}</div>}
+                          </div>
+                          {(form.data.directionNorth || form.data.directionEast || form.data.directionSouth || form.data.directionWest) && (
+                            <div className="mt-2 pt-2 border-t border-blue-300">
+                              <h4 className="text-sm font-semibold text-gray-900 mb-1">Property Directions:</h4>
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                {form.data.directionNorth && <div><strong>North:</strong> {form.data.directionNorth}</div>}
+                                {form.data.directionEast && <div><strong>East:</strong> {form.data.directionEast}</div>}
+                                {form.data.directionSouth && <div><strong>South:</strong> {form.data.directionSouth}</div>}
+                                {form.data.directionWest && <div><strong>West:</strong> {form.data.directionWest}</div>}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Form Details Preview for other forms */}
+                      {form.serviceType !== 'sale-deed' && form.data && (
                         <div className="mt-3 text-sm">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Land Details */}

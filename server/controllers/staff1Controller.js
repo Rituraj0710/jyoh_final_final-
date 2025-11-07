@@ -231,25 +231,68 @@ class Staff1Controller {
 
   /**
    * Get specific form details for Staff1
+   * Fetches complete form data from both FormsData and the original collection
    */
   static getFormById = async (req, res) => {
     try {
       const { id } = req.params;
 
-      const form = await FormsData.findById(id)
+      // Get FormsData document
+      const formsDataDoc = await FormsData.findById(id)
         .populate('userId', 'name email role phone')
         .populate('assignedTo', 'name email role')
         .populate('verifiedBy', 'name email role')
         .populate('lastActivityBy', 'name email role');
 
-      if (!form) {
+      if (!formsDataDoc) {
         return errorResponse(res, 'Form not found', null, 404);
       }
 
       // Check if Staff1 can access this form
-      if (form.approvals.staff1.approved) {
+      if (formsDataDoc.approvals?.staff1?.approved) {
         return errorResponse(res, 'Form already verified by Staff1', null, 403);
       }
+
+      // Fetch original form data from the dedicated collection
+      let originalFormData = null;
+      try {
+        const formId = formsDataDoc.formId;
+        const serviceType = formsDataDoc.serviceType;
+
+        if (formId && serviceType) {
+          // Map service type to model
+          const modelMap = {
+            'will-deed': (await import('../models/WillDeed.js')).default,
+            'sale-deed': (await import('../models/SaleDeed.js')).default,
+            'trust-deed': (await import('../models/TrustDeed.js')).default,
+            'power-of-attorney': (await import('../models/PowerOfAttorney.js')).default,
+            'adoption-deed': (await import('../models/AdoptionDeed.js')).default,
+            'property-registration': (await import('../models/PropertyRegistration.js')).default,
+            'property-sale-certificate': (await import('../models/PropertySaleCertificate.js')).default
+          };
+
+          const Model = modelMap[serviceType];
+          if (Model) {
+            originalFormData = await Model.findById(formId);
+          }
+        }
+      } catch (originalError) {
+        logger.warn('Error fetching original form data:', originalError);
+        // Continue without original form data
+      }
+
+      // Merge all form data into a unified object
+      const completeFormData = {
+        ...formsDataDoc.toObject(),
+        // Original form data takes precedence for fields
+        originalFormData: originalFormData ? originalFormData.toObject() : null,
+        // Create a merged fields object combining FormsData.fields, FormsData.data, and original form
+        allFields: {
+          ...formsDataDoc.fields,
+          ...formsDataDoc.data,
+          ...(originalFormData ? originalFormData.toObject() : {})
+        }
+      };
 
       // Log activity
       await AuditLog.logAction({
@@ -257,13 +300,15 @@ class Staff1Controller {
         userRole: req.user.role,
         action: 'form_view',
         resource: 'forms',
-        resourceId: form._id,
-        details: `Staff1 viewed form ${form.serviceType}`,
+        resourceId: formsDataDoc._id,
+        details: `Staff1 viewed form ${formsDataDoc.serviceType}`,
         ipAddress: req.ip,
         userAgent: req.get('User-Agent')
       });
 
-      return successResponse(res, 'Form retrieved successfully', { form });
+      return successResponse(res, 'Form retrieved successfully', { 
+        form: completeFormData 
+      });
     } catch (error) {
       logger.error('Error getting form by ID for Staff1:', error);
       return errorResponse(res, 'Error retrieving form', error.message, 500);
@@ -305,15 +350,17 @@ class Staff1Controller {
         }
 
         // Store original data for audit trail
-        originalFields = { ...form.fields };
+        originalFields = { ...form.fields, ...form.data };
 
-        // Update form fields
+        // Update form fields and data in FormsData
         form.fields = { ...form.fields, ...fields };
+        form.data = { ...form.data, ...fields };
         form.lastActivityBy = req.user.id;
         form.lastActivityAt = new Date();
 
         // Add correction note
         if (correctionNotes) {
+          if (!form.adminNotes) form.adminNotes = [];
           form.adminNotes.push({
             note: `Staff1 Correction: ${correctionNotes}`,
             addedBy: req.user.id,
@@ -322,6 +369,35 @@ class Staff1Controller {
         }
 
         await form.save();
+
+        // Also update the original form collection if formId exists
+        if (form.formId && form.serviceType) {
+          try {
+            const modelMap = {
+              'will-deed': (await import('../models/WillDeed.js')).default,
+              'sale-deed': (await import('../models/SaleDeed.js')).default,
+              'trust-deed': (await import('../models/TrustDeed.js')).default,
+              'power-of-attorney': (await import('../models/PowerOfAttorney.js')).default,
+              'adoption-deed': (await import('../models/AdoptionDeed.js')).default,
+              'property-registration': (await import('../models/PropertyRegistration.js')).default,
+              'property-sale-certificate': (await import('../models/PropertySaleCertificate.js')).default
+            };
+
+            const OriginalModel = modelMap[form.serviceType];
+            if (OriginalModel) {
+              // Update the original form with corrected fields
+              await OriginalModel.findByIdAndUpdate(
+                form.formId,
+                { $set: fields },
+                { runValidators: false, new: true }
+              );
+              logger.info(`Updated original ${form.serviceType} form ${form.formId} with corrections`);
+            }
+          } catch (originalUpdateError) {
+            logger.warn('Error updating original form collection:', originalUpdateError);
+            // Continue even if original update fails - FormsData is the source of truth
+          }
+        }
       }
 
       // Create or update staff report

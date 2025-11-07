@@ -12,8 +12,7 @@ export default function Staff2FormsPage() {
     limit: 10,
     status: '',
     formType: '',
-    search: '',
-    verificationType: 'trustee' // 'trustee' or 'amount'
+    search: ''
   });
   const [pagination, setPagination] = useState({});
   const { getAuthHeaders } = useAuth();
@@ -78,18 +77,6 @@ export default function Staff2FormsPage() {
     );
   };
 
-  const getVerificationTypeBadge = (type) => {
-    const typeConfig = {
-      'trustee': 'bg-green-100 text-green-800',
-      'amount': 'bg-yellow-100 text-yellow-800'
-    };
-    
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${typeConfig[type] || 'bg-gray-100 text-gray-800'}`}>
-        {type?.toUpperCase() || 'TRUSTEE'}
-      </span>
-    );
-  };
 
   if (loading) {
     return (
@@ -107,26 +94,13 @@ export default function Staff2FormsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Trustee Verification Forms</h1>
-          <p className="text-gray-600">Review and verify trustee details and amount information</p>
+          <h1 className="text-2xl font-bold text-gray-900">Form Verification</h1>
+          <p className="text-gray-600">Verify Seller Details, Buyer Details, Witness Details, and Payment/Stamp Amount</p>
         </div>
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Verification Type</label>
-              <select
-                value={filters.verificationType}
-                onChange={(e) => handleFilterChange('verificationType', e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="trustee">Trustee Details</option>
-                <option value="amount">Amount Verification</option>
-                <option value="">All Types</option>
-              </select>
-            </div>
-            
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <select
@@ -150,11 +124,13 @@ export default function Staff2FormsPage() {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="">All Types</option>
-                <option value="property_registration">Property Registration</option>
-                <option value="property_sale">Property Sale</option>
-                <option value="property_transfer">Property Transfer</option>
-                <option value="will_deed">Will Deed</option>
-                <option value="trust_deed">Trust Deed</option>
+                <option value="sale-deed">Sale Deed</option>
+                <option value="will-deed">Will Deed</option>
+                <option value="trust-deed">Trust Deed</option>
+                <option value="property-registration">Property Registration</option>
+                <option value="property-sale-certificate">Property Sale Certificate</option>
+                <option value="power-of-attorney">Power of Attorney</option>
+                <option value="adoption-deed">Adoption Deed</option>
               </select>
             </div>
 
@@ -197,10 +173,9 @@ export default function Staff2FormsPage() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         <h3 className="text-sm font-medium text-gray-900">
-                          {form.formType?.replace('_', ' ').toUpperCase() || 'FORM'}
+                          {form.serviceType?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'FORM'}
                         </h3>
                         {getStatusBadge(form.status)}
-                        {getVerificationTypeBadge(form.verificationType || 'trustee')}
                       </div>
                       
                       <div className="mt-2 text-sm text-gray-500">
@@ -211,35 +186,12 @@ export default function Staff2FormsPage() {
                         <p>Created: {new Date(form.createdAt).toLocaleDateString()}</p>
                       </div>
 
-                      {/* Trustee Details Preview */}
-                      {form.data && (
+                      {/* Form Details Preview */}
+                      {form.serviceType && (
                         <div className="mt-3 text-sm">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {form.data.trusteeName && (
-                              <div>
-                                <span className="font-medium text-gray-700">Trustee Name:</span>
-                                <span className="ml-2 text-gray-600">{form.data.trusteeName}</span>
-                              </div>
-                            )}
-                            {form.data.trusteeAddress && (
-                              <div>
-                                <span className="font-medium text-gray-700">Trustee Address:</span>
-                                <span className="ml-2 text-gray-600">{form.data.trusteeAddress}</span>
-                              </div>
-                            )}
-                            {form.data.amount && (
-                              <div>
-                                <span className="font-medium text-gray-700">Amount:</span>
-                                <span className="ml-2 text-gray-600">₹{form.data.amount}</span>
-                              </div>
-                            )}
-                            {form.data.stampDuty && (
-                              <div>
-                                <span className="font-medium text-gray-700">Stamp Duty:</span>
-                                <span className="ml-2 text-gray-600">₹{form.data.stampDuty}</span>
-                              </div>
-                            )}
-                          </div>
+                          <p className="text-gray-600">
+                            <span className="font-medium text-gray-700">Service Type:</span> {form.serviceType}
+                          </p>
                         </div>
                       )}
                     </div>

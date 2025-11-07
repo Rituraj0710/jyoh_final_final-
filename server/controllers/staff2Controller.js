@@ -110,31 +110,38 @@ class Staff2Controller {
       const userId = req.user.id;
       
       // Build query for Staff2 forms
+      // Staff2 verifies: Seller Details, Buyer Details, Witness Details, Payment/Stamp Amount
       let query = {
         'approvals.staff1.approved': true,
         'approvals.staff2.approved': false,
         status: 'under_review'
       };
 
-      // Add verification type filter
-      if (verificationType === 'trustee') {
-        query['data.trusteeName'] = { $exists: true };
-      } else if (verificationType === 'amount') {
-        query.$or = [
-          { 'data.propertyValue': { $exists: true } },
-          { 'data.stampDuty': { $exists: true } },
-          { 'data.registrationFee': { $exists: true } }
-        ];
-      }
-
       // Add other filters
       if (status) query.status = status;
-      if (formType) query.formType = formType;
+      if (formType) {
+        // Map formType to serviceType (FormsData uses serviceType, not formType)
+        const serviceTypeMap = {
+          'sale-deed': 'sale-deed',
+          'will-deed': 'will-deed',
+          'trust-deed': 'trust-deed',
+          'property-registration': 'property-registration',
+          'property-sale-certificate': 'property-sale-certificate',
+          'power-of-attorney': 'power-of-attorney',
+          'adoption-deed': 'adoption-deed'
+        };
+        if (serviceTypeMap[formType]) {
+          query.serviceType = serviceTypeMap[formType];
+        }
+      }
+      
+      // Search filter - search across multiple fields
       if (search) {
         query.$or = [
           { _id: { $regex: search, $options: 'i' } },
-          { 'data.trusteeName': { $regex: search, $options: 'i' } },
-          { 'data.trusteePhone': { $regex: search, $options: 'i' } }
+          { serviceType: { $regex: search, $options: 'i' } },
+          { 'userId.name': { $regex: search, $options: 'i' } },
+          { 'userId.email': { $regex: search, $options: 'i' } }
         ];
       }
 
@@ -149,31 +156,8 @@ class Staff2Controller {
 
       const total = await FormsData.countDocuments(query);
 
-      // Filter form data to show only relevant fields for Staff2
-      const filteredForms = forms.map(form => {
-        const filteredData = {};
-        const formData = form.data || {};
-        
-        // Include trustee details
-        if (formData.trusteeName) filteredData.trusteeName = formData.trusteeName;
-        if (formData.trusteePhone) filteredData.trusteePhone = formData.trusteePhone;
-        if (formData.trusteeAddress) filteredData.trusteeAddress = formData.trusteeAddress;
-        if (formData.trusteeIdType) filteredData.trusteeIdType = formData.trusteeIdType;
-        if (formData.trusteeIdNumber) filteredData.trusteeIdNumber = formData.trusteeIdNumber;
-        
-        // Include amount details
-        if (formData.propertyValue) filteredData.propertyValue = formData.propertyValue;
-        if (formData.stampDuty) filteredData.stampDuty = formData.stampDuty;
-        if (formData.registrationFee) filteredData.registrationFee = formData.registrationFee;
-        if (formData.totalAmount) filteredData.totalAmount = formData.totalAmount;
-        if (formData.amount) filteredData.amount = formData.amount;
-
-        return {
-          ...form.toObject(),
-          data: filteredData,
-          verificationType: verificationType || 'trustee'
-        };
-      });
+      // Return all forms - no filtering needed, detail page will show sellers/buyers/witnesses/payment
+      const formsList = forms.map(form => form.toObject());
 
       // Log the action
       await AuditLog.logAction({
@@ -189,7 +173,7 @@ class Staff2Controller {
       res.json({
         status: 'success',
         data: {
-          forms: filteredForms,
+          forms: formsList,
           pagination: {
             current: parseInt(page),
             pages: Math.ceil(total / limit),
@@ -210,17 +194,21 @@ class Staff2Controller {
 
   /**
    * Get specific form for Staff2 verification
+   * Fetches complete form data from both FormsData and the original collection
    */
   static async getFormById(req, res) {
     try {
       const { id } = req.params;
       const userId = req.user.id;
 
-      const form = await FormsData.findById(id)
-        .populate('userId', 'name email')
-        .populate('assignedTo', 'name email role');
+      // Get FormsData document
+      const formsDataDoc = await FormsData.findById(id)
+        .populate('userId', 'name email role phone')
+        .populate('assignedTo', 'name email role')
+        .populate('verifiedBy', 'name email role')
+        .populate('lastActivityBy', 'name email role');
 
-      if (!form) {
+      if (!formsDataDoc) {
         return res.status(404).json({
           status: 'failed',
           message: 'Form not found'
@@ -228,30 +216,87 @@ class Staff2Controller {
       }
 
       // Check if form is ready for Staff2 verification
-      if (!form.approvals?.staff1?.approved) {
+      if (!formsDataDoc.approvals?.staff1?.approved) {
         return res.status(403).json({
           status: 'failed',
-          message: 'Form is not ready for Staff2 verification'
+          message: 'Form is not ready for Staff2 verification. Staff1 must verify first.'
         });
       }
 
-      // Filter form data to show only relevant fields for Staff2
-      const filteredData = {};
-      const formData = form.data || {};
+      // Check if Staff2 has already verified
+      if (formsDataDoc.approvals?.staff2?.approved) {
+        return res.status(403).json({
+          status: 'failed',
+          message: 'Form already verified by Staff2'
+        });
+      }
+
+      // Fetch original form data from the dedicated collection
+      let originalFormData = null;
+      try {
+        const formId = formsDataDoc.formId;
+        const serviceType = formsDataDoc.serviceType;
+
+        if (formId && serviceType) {
+          // Map service type to model
+          const modelMap = {
+            'will-deed': (await import('../models/WillDeed.js')).default,
+            'sale-deed': (await import('../models/SaleDeed.js')).default,
+            'trust-deed': (await import('../models/TrustDeed.js')).default,
+            'power-of-attorney': (await import('../models/PowerOfAttorney.js')).default,
+            'adoption-deed': (await import('../models/AdoptionDeed.js')).default,
+            'property-registration': (await import('../models/PropertyRegistration.js')).default,
+            'property-sale-certificate': (await import('../models/PropertySaleCertificate.js')).default
+          };
+
+          const Model = modelMap[serviceType];
+          if (Model) {
+            originalFormData = await Model.findById(formId);
+          }
+        }
+      } catch (originalError) {
+        logger.warn('Error fetching original form data for Staff2:', originalError);
+        // Continue without original form data
+      }
+
+      // Extract seller, buyer, witness details from original form or FormsData
+      const allFormData = {
+        ...formsDataDoc.fields,
+        ...formsDataDoc.data,
+        ...(originalFormData ? originalFormData.toObject() : {})
+      };
+
+      // Extract relevant data for Staff2 verification
+      const sellerData = allFormData.sellers || [];
+      const buyerData = allFormData.buyers || [];
+      const witnessData = allFormData.witnesses || [];
       
-      // Include trustee details
-      if (formData.trusteeName) filteredData.trusteeName = formData.trusteeName;
-      if (formData.trusteePhone) filteredData.trusteePhone = formData.trusteePhone;
-      if (formData.trusteeAddress) filteredData.trusteeAddress = formData.trusteeAddress;
-      if (formData.trusteeIdType) filteredData.trusteeIdType = formData.trusteeIdType;
-      if (formData.trusteeIdNumber) filteredData.trusteeIdNumber = formData.trusteeIdNumber;
-      
-      // Include amount details
-      if (formData.propertyValue) filteredData.propertyValue = formData.propertyValue;
-      if (formData.stampDuty) filteredData.stampDuty = formData.stampDuty;
-      if (formData.registrationFee) filteredData.registrationFee = formData.registrationFee;
-      if (formData.totalAmount) filteredData.totalAmount = formData.totalAmount;
-      if (formData.amount) filteredData.amount = formData.amount;
+      // Extract payment/stamp information
+      const paymentInfo = {
+        salePrice: allFormData.salePrice || allFormData.amount || 0,
+        circleRateAmount: allFormData.circleRateAmount || 0,
+        stampDuty: formsDataDoc.paymentInfo?.calculations?.stampDuty || allFormData.stampDuty || allFormData.calculations?.stampDuty || 0,
+        registrationCharge: formsDataDoc.paymentInfo?.calculations?.registrationCharge || allFormData.registrationCharge || allFormData.calculations?.registrationCharge || 0,
+        courtFee: formsDataDoc.paymentInfo?.calculations?.courtFee || allFormData.courtFee || allFormData.calculations?.courtFee || 0,
+        totalPayable: formsDataDoc.paymentInfo?.calculations?.totalPayable || allFormData.totalPayable || allFormData.calculations?.totalPayable || 0,
+        paymentStatus: formsDataDoc.paymentInfo?.paymentStatus || 'pending',
+        paymentAmount: formsDataDoc.paymentInfo?.paymentAmount || 0,
+        paymentTransactionId: formsDataDoc.paymentInfo?.paymentTransactionId || null
+      };
+
+      // Merge all data into a unified object
+      const completeFormData = {
+        ...formsDataDoc.toObject(),
+        originalFormData: originalFormData ? originalFormData.toObject() : null,
+        allFields: allFormData,
+        // Staff2 specific verification data
+        verificationData: {
+          sellers: sellerData,
+          buyers: buyerData,
+          witnesses: witnessData,
+          paymentInfo: paymentInfo
+        }
+      };
 
       // Log the action
       await AuditLog.logAction({
@@ -259,8 +304,8 @@ class Staff2Controller {
         userRole: req.user.role,
         action: 'form_view',
         resource: 'staff2_form',
-        resourceId: form._id,
-        details: `Viewed form ${id} for Staff2 verification`,
+        resourceId: formsDataDoc._id,
+        details: `Staff2 viewed form ${formsDataDoc.serviceType} for verification`,
         ipAddress: req.ip,
         userAgent: req.get('User-Agent')
       });
@@ -268,10 +313,7 @@ class Staff2Controller {
       res.json({
         status: 'success',
         data: {
-          form: {
-            ...form.toObject(),
-            data: filteredData
-          }
+          form: completeFormData
         }
       });
 
@@ -301,36 +343,140 @@ class Staff2Controller {
         });
       }
 
-      // Update form with Staff2 verification
-      const updateData = {
-        'approvals.staff2': {
-          approved,
-          verifiedBy: userId,
-          verifiedAt: new Date(),
-          notes: verificationNotes,
-          verificationType: verificationType || 'trustee'
-        }
+      // Check if already verified by Staff2
+      if (form.approvals?.staff2?.approved) {
+        return res.status(400).json({
+          status: 'failed',
+          message: 'Form already verified by Staff2'
+        });
+      }
+
+      // Check if Staff1 has verified
+      if (!form.approvals?.staff1?.approved) {
+        return res.status(403).json({
+          status: 'failed',
+          message: 'Form must be verified by Staff1 before Staff2 verification'
+        });
+      }
+
+      // Build $set update object for MongoDB
+      // Note: verificationType enum is ['trustee', 'amount'] - use 'amount' for sale-deed seller/buyer/witness/payment verification
+      const validVerificationType = verificationType && ['trustee', 'amount'].includes(verificationType) 
+        ? verificationType 
+        : (form.serviceType === 'sale-deed' ? 'amount' : 'trustee');
+      
+      const $set = {
+        'approvals.staff2.approved': approved,
+        'approvals.staff2.verifiedBy': userId,
+        'approvals.staff2.verifiedAt': new Date(),
+        'approvals.staff2.notes': verificationNotes || (approved ? 'Verified by Staff2' : 'Rejected by Staff2'),
+        'approvals.staff2.verificationType': validVerificationType,
+        'approvals.staff2.lastUpdatedBy': userId,
+        'approvals.staff2.lastUpdatedAt': new Date(),
+        lastActivityBy: userId,
+        lastActivityAt: new Date()
       };
 
-      // If approved, update form data with any corrections
-      if (approved && updatedFields) {
-        updateData.data = { ...form.data, ...updatedFields };
-      }
-
-      // Update form status
+      // Update form status based on approval
       if (approved) {
-        updateData.status = 'under_review'; // Move to next stage
-        updateData['approvals.staff2.status'] = 'verified';
+        $set.status = 'under_review'; // Move to Staff3 (next stage)
+        $set['approvals.staff2.status'] = 'verified';
       } else {
-        updateData.status = 'needs_correction';
-        updateData['approvals.staff2.status'] = 'needs_correction';
+        $set.status = 'needs_correction';
+        $set['approvals.staff2.status'] = 'needs_correction';
       }
 
+      // If approved, update form data with any corrections
+      // Also update original form collection if formId exists
+      if (approved && updatedFields) {
+        // Merge updatedFields with existing form.data
+        const updatedData = { ...form.data, ...updatedFields };
+        $set.data = updatedData;
+        
+        // Update original form collection with seller/buyer/witness/payment changes
+        if (form.formId && form.serviceType) {
+          try {
+            const modelMap = {
+              'will-deed': (await import('../models/WillDeed.js')).default,
+              'sale-deed': (await import('../models/SaleDeed.js')).default,
+              'trust-deed': (await import('../models/TrustDeed.js')).default,
+              'power-of-attorney': (await import('../models/PowerOfAttorney.js')).default,
+              'adoption-deed': (await import('../models/AdoptionDeed.js')).default,
+              'property-registration': (await import('../models/PropertyRegistration.js')).default,
+              'property-sale-certificate': (await import('../models/PropertySaleCertificate.js')).default
+            };
+
+            const OriginalModel = modelMap[form.serviceType];
+            if (OriginalModel) {
+              const originalUpdate = {};
+              
+              // Update sellers if provided
+              if (updatedFields.sellers) {
+                originalUpdate.sellers = updatedFields.sellers;
+              }
+              
+              // Update buyers if provided
+              if (updatedFields.buyers) {
+                originalUpdate.buyers = updatedFields.buyers;
+              }
+              
+              // Update witnesses if provided
+              if (updatedFields.witnesses) {
+                originalUpdate.witnesses = updatedFields.witnesses;
+              }
+              
+              // Update payment/stamp info if provided
+              if (updatedFields.paymentInfo) {
+                Object.keys(updatedFields.paymentInfo).forEach(key => {
+                  if (key === 'stampDuty') originalUpdate.stampDuty = updatedFields.paymentInfo[key];
+                  else if (key === 'salePrice') originalUpdate.salePrice = updatedFields.paymentInfo[key];
+                  else if (key === 'circleRateAmount') originalUpdate.circleRateAmount = updatedFields.paymentInfo[key];
+                  else if (key === 'registrationCharge') originalUpdate.registrationCharge = updatedFields.paymentInfo[key];
+                  else if (key === 'totalPayable') originalUpdate.totalPayable = updatedFields.paymentInfo[key];
+                });
+              }
+
+              if (Object.keys(originalUpdate).length > 0) {
+                await OriginalModel.findByIdAndUpdate(
+                  form.formId,
+                  { $set: originalUpdate },
+                  { runValidators: false, new: true }
+                );
+                logger.info(`Updated original ${form.serviceType} form ${form.formId} with Staff2 corrections`);
+              }
+            }
+          } catch (originalUpdateError) {
+            logger.warn('Error updating original form collection:', originalUpdateError);
+            // Continue even if original update fails - FormsData is the source of truth
+          }
+        }
+      }
+
+      // Update form using $set operator for nested fields
       const updatedForm = await FormsData.findByIdAndUpdate(
         id,
-        updateData,
-        { new: true }
+        { $set },
+        { new: true, runValidators: false }
       );
+
+      if (!updatedForm) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'Form not found after update'
+        });
+      }
+
+      // Add admin note about Staff2 verification
+      if (!updatedForm.adminNotes) updatedForm.adminNotes = [];
+      updatedForm.adminNotes.push({
+        note: `Staff2 ${approved ? 'Verification' : 'Rejection'}: ${verificationNotes || (approved ? 'Form verified by Staff2' : 'Form requires correction')}`,
+        addedBy: userId,
+        addedAt: new Date()
+      });
+
+      // Mark adminNotes as modified and save
+      updatedForm.markModified('adminNotes');
+      await updatedForm.save();
 
       // Log the action
       await AuditLog.logAction({
@@ -339,22 +485,33 @@ class Staff2Controller {
         action: 'form_verify',
         resource: 'staff2_form',
         resourceId: form._id,
-        details: `Staff2 ${approved ? 'approved' : 'rejected'} form verification`,
+        details: `Staff2 ${approved ? 'verified' : 'rejected'} form ${form.serviceType}. Status: ${approved ? 'Moving to Staff3' : 'Needs Correction'}`,
         ipAddress: req.ip,
         userAgent: req.get('User-Agent')
       });
 
       res.json({
         status: 'success',
-        message: `Form ${approved ? 'verified' : 'marked for correction'} successfully`,
-        data: { form: updatedForm }
+        message: `Form ${approved ? 'verified by Staff2 successfully' : 'marked for correction by Staff2'}. ${approved ? 'Form will proceed to Staff3.' : ''}`,
+        data: { 
+          form: updatedForm,
+          nextStage: approved ? 'staff3' : null
+        }
       });
 
     } catch (error) {
       logger.error('Error verifying Staff2 form:', error);
+      logger.error('Error stack:', error.stack);
+      logger.error('Request details:', {
+        formId: req.params.id,
+        userId: req.user?.id,
+        approved: req.body?.approved,
+        errorMessage: error.message
+      });
       res.status(500).json({
         status: 'failed',
-        message: 'Error processing verification'
+        message: error.message || 'Error processing verification',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
       });
     }
   }
@@ -376,13 +533,18 @@ class Staff2Controller {
         });
       }
 
+      // Validate verificationType enum: ['trustee', 'amount']
+      const validVerificationType = verificationType && ['trustee', 'amount'].includes(verificationType) 
+        ? verificationType 
+        : (form.serviceType === 'sale-deed' ? 'amount' : 'trustee');
+      
       // Update form data with Staff2 corrections
       const updateData = {
         data: { ...form.data, ...updatedFields },
         'approvals.staff2.lastUpdatedBy': userId,
         'approvals.staff2.lastUpdatedAt': new Date(),
         'approvals.staff2.updateNotes': updateNotes,
-        'approvals.staff2.verificationType': verificationType
+        'approvals.staff2.verificationType': validVerificationType
       };
 
       const updatedForm = await FormsData.findByIdAndUpdate(
@@ -485,31 +647,69 @@ class Staff2Controller {
    */
   static async submitWorkReport(req, res) {
     try {
-      const { date, verifiedForms, correctedForms, workNotes, challenges, recommendations } = req.body;
-      const userId = req.user.id;
-
-      // Create work report
-      const workReport = new StaffReport({
-        staffId: userId,
-        role: 'staff2',
-        date: new Date(date),
-        verifiedForms,
-        correctedForms,
-        workNotes,
-        challenges,
+      const { 
+        completedTasks,
+        workSummary,
+        issuesEncountered,
         recommendations,
-        submittedAt: new Date()
-      });
+        formsProcessed 
+      } = req.body;
 
+      // Get all staff reports for this staff member that are not yet submitted
+      const pendingReports = await StaffReport.find({
+        staffId: req.user.id,
+        isSubmitted: false
+      }).populate('formId', 'serviceType formTitle status');
+
+      // Mark all pending reports as submitted
+      await StaffReport.updateMany(
+        { staffId: req.user.id, isSubmitted: false },
+        { 
+          isSubmitted: true,
+          submittedAt: new Date(),
+          reviewNotes: workSummary
+        }
+      );
+
+      // Create a comprehensive work report entry (same format as Staff1)
+      const workReportData = {
+        staffId: req.user.id,
+        formId: null, // This is a general work report, not tied to specific form
+        formType: 'work-report',
+        verificationStatus: 'pending',
+        remarks: workSummary,
+        verificationNotes: `
+          Completed Tasks: ${completedTasks?.join(', ') || 'None specified'}
+          
+          Work Summary: ${workSummary || 'No summary provided'}
+          
+          Issues Encountered: ${issuesEncountered || 'None reported'}
+          
+          Recommendations: ${recommendations || 'None provided'}
+          
+          Forms Processed: ${formsProcessed || pendingReports.length}
+          
+          Report Details:
+          ${pendingReports.map(report => 
+            `- ${report.formId?.serviceType || 'Unknown'}: ${report.verificationStatus || 'processed'}`
+          ).join('\n')}
+        `,
+        isSubmitted: true,
+        submittedAt: new Date()
+      };
+
+      // Create work report entry
+      const workReport = new StaffReport(workReportData);
       await workReport.save();
 
-      // Log the action
+      // Log activity
       await AuditLog.logAction({
         userId: req.user.id,
         userRole: req.user.role,
-        action: 'work_report_submit',
-        resource: 'staff2_report',
-        details: `Submitted work report for ${date}`,
+        action: 'work_report_submission',
+        resource: 'staff_reports',
+        resourceId: workReport._id,
+        details: `Staff2 submitted work report with ${pendingReports.length} processed forms`,
         ipAddress: req.ip,
         userAgent: req.get('User-Agent')
       });
@@ -517,14 +717,60 @@ class Staff2Controller {
       res.json({
         status: 'success',
         message: 'Work report submitted successfully',
-        data: { workReport }
+        data: {
+          workReport,
+          processedForms: pendingReports.length,
+          submittedReports: pendingReports
+        }
       });
 
     } catch (error) {
       logger.error('Error submitting Staff2 work report:', error);
       res.status(500).json({
         status: 'failed',
-        message: 'Error submitting work report'
+        message: error.message || 'Error submitting work report'
+      });
+    }
+  }
+
+  /**
+   * Get Staff2's work reports
+   */
+  static async getWorkReports(req, res) {
+    try {
+      const { page = 1, limit = 10, status } = req.query;
+      const skip = (page - 1) * limit;
+
+      const query = { staffId: req.user.id };
+      if (status) query.verificationStatus = status;
+
+      const reports = await StaffReport.find(query)
+        .populate('formId', 'serviceType formTitle status fields')
+        .populate('reviewedBy', 'name email role')
+        .sort({ createdAt: -1 })
+        .limit(parseInt(limit))
+        .skip(parseInt(skip));
+
+      const total = await StaffReport.countDocuments(query);
+
+      res.json({
+        status: 'success',
+        data: {
+          reports,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            pages: Math.ceil(total / limit)
+          }
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error getting Staff2 work reports:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Error retrieving work reports'
       });
     }
   }

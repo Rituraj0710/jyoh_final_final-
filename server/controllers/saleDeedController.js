@@ -26,6 +26,63 @@ class SaleDeedController {
       // Sanitize all input data
       const sanitizedData = sanitizeInput(req.body);
       
+      // Parse arrays from FormData format if needed
+      let sellers = sanitizedData.sellers || [];
+      let buyers = sanitizedData.buyers || [];
+      let witnesses = sanitizedData.witnesses || [];
+      
+      // If sellers is not an array, parse from FormData format
+      if (!Array.isArray(sellers) || sellers.length === 0) {
+        sellers = [];
+        let sellerIndex = 1;
+        while (sanitizedData[`sellers_${sellerIndex}_name`]) {
+          const seller = {
+            name: sanitizedData[`sellers_${sellerIndex}_name`],
+            relation: sanitizedData[`sellers_${sellerIndex}_relation`],
+            address: sanitizedData[`sellers_${sellerIndex}_address`],
+            mobile: sanitizedData[`sellers_${sellerIndex}_mobile`],
+            idType: sanitizedData[`sellers_${sellerIndex}_idType`],
+            idNo: sanitizedData[`sellers_${sellerIndex}_idNo`]
+          };
+          sellers.push(seller);
+          sellerIndex++;
+        }
+      }
+      
+      // If buyers is not an array, parse from FormData format
+      if (!Array.isArray(buyers) || buyers.length === 0) {
+        buyers = [];
+        let buyerIndex = 1;
+        while (sanitizedData[`buyers_${buyerIndex}_name`]) {
+          const buyer = {
+            name: sanitizedData[`buyers_${buyerIndex}_name`],
+            relation: sanitizedData[`buyers_${buyerIndex}_relation`],
+            address: sanitizedData[`buyers_${buyerIndex}_address`],
+            mobile: sanitizedData[`buyers_${buyerIndex}_mobile`],
+            idType: sanitizedData[`buyers_${buyerIndex}_idType`],
+            idNo: sanitizedData[`buyers_${buyerIndex}_idNo`]
+          };
+          buyers.push(buyer);
+          buyerIndex++;
+        }
+      }
+      
+      // If witnesses is not an array, parse from FormData format
+      if (!Array.isArray(witnesses) || witnesses.length === 0) {
+        witnesses = [];
+        let witnessIndex = 1;
+        while (sanitizedData[`witnesses_${witnessIndex}_name`]) {
+          const witness = {
+            name: sanitizedData[`witnesses_${witnessIndex}_name`],
+            relation: sanitizedData[`witnesses_${witnessIndex}_relation`],
+            address: sanitizedData[`witnesses_${witnessIndex}_address`],
+            mobile: sanitizedData[`witnesses_${witnessIndex}_mobile`]
+          };
+          witnesses.push(witness);
+          witnessIndex++;
+        }
+      }
+      
       const {
         documentType,
         propertyType,
@@ -40,9 +97,32 @@ class SaleDeedController {
         district,
         tehsil,
         village,
-        sellers = [],
-        buyers = [],
-        witnesses = [],
+        khasraNo,
+        plotNo,
+        colonyName,
+        wardNo,
+        streetNo,
+        roadSize,
+        roadUnit,
+        doubleSideRoad,
+        directionNorth,
+        directionEast,
+        directionSouth,
+        directionWest,
+        coveredParkingCount,
+        openParkingCount,
+        deductionType,
+        otherDeductionPercent,
+        areaInputType,
+        dimUnit,
+        buildupType,
+        numShops,
+        numFloorsMall,
+        numFloorsMulti,
+        superAreaMulti,
+        coveredAreaMulti,
+        nalkoopCount,
+        borewellCount,
         rooms = [],
         trees = [],
         shops = [],
@@ -95,14 +175,45 @@ class SaleDeedController {
         plotType,
         salePrice: parseFloat(salePrice) || 0,
         circleRateAmount: parseFloat(circleRateAmount) || 0,
+        areaInputType: areaInputType || 'total',
         area: parseFloat(area) || 0,
-        areaUnit,
+        areaUnit: areaUnit || 'sq_meters',
         propertyLength: parseFloat(propertyLength) || 0,
         propertyWidth: parseFloat(propertyWidth) || 0,
+        dimUnit: dimUnit || 'meters',
+        buildupType,
+        numShops: parseInt(numShops) || 1,
+        numFloorsMall: parseInt(numFloorsMall) || 1,
+        numFloorsMulti: parseInt(numFloorsMulti) || 1,
+        superAreaMulti: parseFloat(superAreaMulti) || 0,
+        coveredAreaMulti: parseFloat(coveredAreaMulti) || 0,
+        nalkoopCount: parseInt(nalkoopCount) || 0,
+        borewellCount: parseInt(borewellCount) || 0,
+        // Property Location
         state,
         district,
         tehsil,
         village,
+        khasraNo,
+        plotNo,
+        colonyName,
+        wardNo,
+        streetNo,
+        roadSize: parseFloat(roadSize) || 0,
+        roadUnit: roadUnit || 'meter',
+        doubleSideRoad: doubleSideRoad === true || doubleSideRoad === 'true',
+        // Property Directions
+        directionNorth,
+        directionEast,
+        directionSouth,
+        directionWest,
+        // Common Facilities
+        coveredParkingCount: parseInt(coveredParkingCount) || 0,
+        openParkingCount: parseInt(openParkingCount) || 0,
+        // Deductions
+        deductionType,
+        otherDeductionPercent: parseFloat(otherDeductionPercent) || 0,
+        // Parties
         sellers,
         buyers,
         witnesses,

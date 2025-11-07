@@ -117,7 +117,7 @@ supportTicketSchema.index({ status: 1 });
 supportTicketSchema.index({ category: 1 });
 supportTicketSchema.index({ priority: 1 });
 supportTicketSchema.index({ assignedTo: 1 });
-supportTicketSchema.index({ ticketNumber: 1 });
+// Note: ticketNumber already has an index due to unique: true constraint
 supportTicketSchema.index({ createdAt: -1 });
 
 // Virtual for ticket age

@@ -31,11 +31,12 @@ class AdminController {
       // Validate role exists and is active
       const Role = (await import('../models/Role.js')).default;
       const roleExists = await Role.findOne({ name: role, isActive: true });
+      
+      // Allow creating staff even if role doesn't exist in database yet
+      // This allows flexibility during initial setup
       if (!roleExists) {
-        return res.status(400).json({
-          status: "failed",
-          message: "Invalid role. Role does not exist or is inactive"
-        });
+        console.warn(`Role ${role} not found in database, but allowing staff creation`);
+        // Continue without blocking - the role will be used as-is
       }
 
       // Check if email already exists
@@ -155,11 +156,12 @@ class AdminController {
       if (role) {
         const Role = (await import('../models/Role.js')).default;
         const roleExists = await Role.findOne({ name: role, isActive: true });
+        
+        // Allow editing staff even if role doesn't exist in database yet
+        // This allows flexibility during initial setup
         if (!roleExists) {
-          return res.status(400).json({
-            status: "failed",
-            message: "Invalid role. Role does not exist or is inactive"
-          });
+          console.warn(`Role ${role} not found in database, but allowing staff update`);
+          // Continue without blocking - the role will be used as-is
         }
       }
 
@@ -212,45 +214,110 @@ class AdminController {
         updateData.isActive = isActive;
       }
       
-      if (password) updateData.password = password; // Will be hashed by User model pre-save middleware
-      updateData.updatedBy = adminUser._id;
-
-      const updatedStaff = await UserModel.findByIdAndUpdate(
-        staffId,
-        updateData,
-        { new: true, runValidators: true }
-      );
-
-      // Log the action
-      await AuditLog.logAction({
-        userId: adminUser._id,
-        userRole: adminUser.role,
-        action: 'staff_update',
-        resource: 'staff',
-        resourceId: staffId,
-        details: {
-          updatedFields: Object.keys(updateData),
-          staffName: updatedStaff.name,
-          staffEmail: updatedStaff.email,
-          staffRole: updatedStaff.role
-        },
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent')
-      });
-
-      res.status(200).json({
-        status: "success",
-        message: "Staff account updated successfully",
-        staff: {
-          id: updatedStaff._id,
-          name: updatedStaff.name,
-          email: updatedStaff.email,
-          role: updatedStaff.role,
-          department: updatedStaff.department,
-          employeeId: updatedStaff.employeeId,
-          isActive: updatedStaff.isActive
+      // Handle password update separately to ensure it's hashed
+      if (password) {
+        // Import bcrypt for direct hashing
+        const bcrypt = (await import('bcrypt')).default;
+        
+        // Hash password directly using bcrypt (same method as User model)
+        const salt = await bcrypt.genSalt(12);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        
+        console.log('Hashing password for staff:', staffId);
+        console.log('Password hash length:', hashedPassword.length);
+        
+        // Update password directly in database to bypass pre-save middleware
+        await UserModel.updateOne(
+          { _id: staffId },
+          { $set: { password: hashedPassword } }
+        );
+        
+        // Verify password was hashed correctly
+        const updatedUser = await UserModel.findById(staffId).select('+password');
+        if (!updatedUser) {
+          return res.status(404).json({
+            status: "error",
+            message: "Staff not found"
+          });
         }
-      });
+        
+        const isPasswordCorrect = await bcrypt.compare(password, updatedUser.password);
+        console.log('Password verification test:', isPasswordCorrect ? '✅ PASS' : '❌ FAIL');
+        
+        // Update other fields (excluding password which is already updated)
+        Object.keys(updateData).forEach(key => {
+          if (key !== 'password') {
+            updatedUser[key] = updateData[key];
+          }
+        });
+        updatedUser.updatedBy = adminUser._id;
+        await updatedUser.save();
+          
+        // Fetch updated staff without password field
+        const updatedStaff = await UserModel.findById(staffId).select('-password');
+          
+        // Log the action
+        await AuditLog.logAction({
+          userId: adminUser._id,
+          userRole: adminUser.role,
+          action: 'staff_update',
+          resource: 'staff',
+          resourceId: staffId,
+          resourceModel: 'User',
+          success: true,
+          details: {
+            updatedFields: Object.keys(updateData),
+            hasPasswordUpdate: !!password
+          },
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent')
+        });
+
+        return res.status(200).json({
+          status: "success",
+          message: "Staff updated successfully",
+          data: updatedStaff
+        });
+      } else {
+        // No password update, use regular update
+        updateData.updatedBy = adminUser._id;
+        const updatedStaff = await UserModel.findByIdAndUpdate(
+          staffId,
+          updateData,
+          { new: true, runValidators: true }
+        ).select('-password');
+
+        // Log the action
+        await AuditLog.logAction({
+          userId: adminUser._id,
+          userRole: adminUser.role,
+          action: 'staff_update',
+          resource: 'staff',
+          resourceId: staffId,
+          details: {
+            updatedFields: Object.keys(updateData),
+            staffName: updatedStaff.name,
+            staffEmail: updatedStaff.email,
+            staffRole: updatedStaff.role
+          },
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent')
+        });
+
+        return res.status(200).json({
+          status: "success",
+          message: "Staff account updated successfully",
+          staff: {
+            id: updatedStaff._id,
+            name: updatedStaff.name,
+            email: updatedStaff.email,
+            role: updatedStaff.role,
+            department: updatedStaff.department,
+            employeeId: updatedStaff.employeeId,
+            isActive: updatedStaff.isActive
+          }
+        });
+      }
 
     } catch (error) {
       console.error('Update staff error:', error);

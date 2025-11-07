@@ -8,18 +8,19 @@ const staffReportSchema = new mongoose.Schema({
   },
   formId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'FormsData'
+    required: false,
+    ref: 'FormsData',
+    default: null
   },
   formType: {
     type: String,
     required: true,
-    enum: ['sale-deed', 'will-deed', 'trust-deed', 'property-registration', 'power-of-attorney', 'adoption-deed']
+    enum: ['sale-deed', 'will-deed', 'trust-deed', 'property-registration', 'power-of-attorney', 'adoption-deed', 'property-sale-certificate', 'work-report', 'cross-verification-report', 'final-report']
   },
   verificationStatus: {
     type: String,
     required: true,
-    enum: ['pending', 'verified', 'rejected', 'needs_revision'],
+    enum: ['pending', 'verified', 'rejected', 'needs_revision', 'submitted'],
     default: 'pending'
   },
   editedData: {
@@ -92,6 +93,10 @@ const staffReportSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: 1000
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   }
 }, {
   timestamps: true,
@@ -159,14 +164,20 @@ staffReportSchema.statics.getAllReports = function(filters = {}) {
     if (filters.dateTo) query.createdAt.$lte = new Date(filters.dateTo);
   }
   
-  return this.find(query)
-    .populate('formId', 'formTitle formDescription status fields userId')
+  const reports = this.find(query)
     .populate('staffId', 'name email role department employeeId')
     .populate('reviewedBy', 'name email role')
-    .populate('formId.userId', 'name email')
     .sort({ createdAt: -1 })
     .limit(filters.limit || 100)
     .skip(filters.skip || 0);
+  
+  // Conditionally populate formId only if it exists
+  // Note: Mongoose will skip populate if formId is null
+  return reports.populate({
+    path: 'formId',
+    select: 'formTitle formDescription status fields userId',
+    options: { strictPopulate: false }
+  });
 };
 
 // Instance method to calculate changes

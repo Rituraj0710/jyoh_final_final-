@@ -33,7 +33,8 @@ export default function Staff1FormCorrectionPage() {
       if (response.ok) {
         const data = await response.json();
         setForm(data.data.form);
-        setFormFields(data.data.form.fields || {});
+        // Use allFields which contains merged data from FormsData and original collection
+        setFormFields(data.data.form.allFields || data.data.form.fields || data.data.form.data || {});
       } else {
         throw new Error('Failed to fetch form details');
       }
@@ -320,16 +321,26 @@ export default function Staff1FormCorrectionPage() {
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {Object.entries(formFields).map(([fieldName, value]) => {
+              // Skip internal MongoDB/formsData fields
+              if (fieldName.startsWith('_') || fieldName === '__v' || fieldName === 'createdAt' || fieldName === 'updatedAt' || 
+                  fieldName === 'userId' || fieldName === 'formId' || fieldName === 'serviceType' || fieldName === 'status' ||
+                  fieldName === 'approvals' || fieldName === 'adminNotes' || fieldName === 'fields' || fieldName === 'data' ||
+                  fieldName === 'rawFormData' || fieldName === 'originalFormData' || fieldName === 'allFields') {
+                return null;
+              }
+
               const fieldType = getFieldType(fieldName, value);
+              const originalValue = form.fields?.[fieldName] || form.data?.[fieldName] || form.allFields?.[fieldName];
+              
               return (
                 <div key={fieldName} className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     {fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                   </label>
                   {renderFieldInput(fieldName, value, fieldType)}
-                  {form.fields && form.fields[fieldName] !== formFields[fieldName] && (
+                  {originalValue !== undefined && originalValue !== formFields[fieldName] && (
                     <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                      <strong>Original:</strong> {form.fields[fieldName] || 'Empty'}
+                      <strong>Original:</strong> {typeof originalValue === 'object' ? JSON.stringify(originalValue) : String(originalValue || 'Empty')}
                     </div>
                   )}
                 </div>

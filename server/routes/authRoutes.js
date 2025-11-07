@@ -2,7 +2,9 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import AuditLog from '../models/AuditLog.js';
+import EmailVerification from '../models/EmailVerification.js';
 import logger from '../config/logger.js';
+import sendSignupEmail from '../utils/sendSignupEmail.js';
 
 const router = express.Router();
 
@@ -31,7 +33,7 @@ router.post('/login', async (req, res) => {
 
     // Find user by email
     const user = await User.findOne({ email, isActive: true }).select('+password');
-    console.log('User found:', user ? { email: user.email, role: user.role, isActive: user.isActive } : 'Not found');
+    console.log('User found:', user ? { email: user.email, role: user.role, isActive: user.isActive, is_verified: user.is_verified } : 'Not found');
     
     if (!user) {
       console.log('User not found for email:', email);
@@ -41,12 +43,32 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Check if email is verified (for regular users)
+    if (!user.is_verified && (user.role === 'user1' || user.role === 'user2')) {
+      console.log('Email not verified for user:', email);
+      return res.status(401).json({
+        success: false,
+        message: 'Please verify your email before logging in. Check your inbox for verification code.'
+      });
+    }
+
     // Check password
     const isPasswordValid = await user.comparePassword(password);
     console.log('Password valid:', isPasswordValid);
+    console.log('User password hash exists:', !!user.password);
+    console.log('User password hash length:', user.password?.length);
     
     if (!isPasswordValid) {
       console.log('Invalid password for user:', email);
+      console.log('User details:', {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        is_verified: user.is_verified,
+        hasPassword: !!user.password,
+        passwordHashPrefix: user.password?.substring(0, 20)
+      });
       // Log failed login attempt
       await AuditLog.logAction({
         userId: user._id,
@@ -63,7 +85,7 @@ router.post('/login', async (req, res) => {
 
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials. Please verify your email and password are correct.'
       });
     }
 
@@ -450,6 +472,166 @@ router.post('/logout', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Logout failed'
+    });
+  }
+});
+
+/**
+ * Verify OTP endpoint for email verification
+ */
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if user is already verified
+    if (user.is_verified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Check if OTP exists and matches
+    if (!user.otp || user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP'
+      });
+    }
+
+    // Check if OTP is expired
+    if (user.otpExpiry && user.otpExpiry < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired. Please request a new one.'
+      });
+    }
+
+    // Update user verification status
+    user.is_verified = true;
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    // Remove verification record from EmailVerification collection
+    await EmailVerification.findOneAndDelete({
+      email: email.toLowerCase(),
+      userType: 'user'
+    });
+
+    // Log email verification
+    await AuditLog.logAction({
+      userId: user._id,
+      userRole: user.role,
+      action: 'email_verification',
+      resource: 'user',
+      resourceId: user._id,
+      details: 'Email verified successfully',
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+      status: 'success'
+    });
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully. You can now login.'
+    });
+
+  } catch (error) {
+    logger.error('OTP verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'OTP verification failed',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Resend OTP endpoint
+ */
+router.post('/resend-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if already verified
+    if (user.is_verified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Generate new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    // Update user with new OTP
+    user.otp = otp;
+    user.otpExpiry = otpExpiry;
+    await user.save();
+
+    // Send email with new OTP
+    try {
+      await sendSignupEmail(email, otp, user.name);
+      logger.info(`New OTP sent to: ${email}`);
+    } catch (emailError) {
+      logger.error(`Failed to send OTP email to ${email}:`, emailError);
+      // Return OTP in development even if email fails
+      if (process.env.NODE_ENV === 'development') {
+        return res.json({
+          success: true,
+          message: 'OTP generated (email sending failed in development)',
+          otp: otp
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'OTP has been resent to your email',
+      otp: process.env.NODE_ENV === 'development' ? otp : undefined // Only return OTP in development
+    });
+
+  } catch (error) {
+    logger.error('Resend OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend OTP'
     });
   }
 });

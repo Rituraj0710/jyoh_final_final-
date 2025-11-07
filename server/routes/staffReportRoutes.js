@@ -51,5 +51,12 @@ router.get("/admin/all",
   StaffReportController.getAllReports
 );
 
+// Admin: Review (verify/reject) a staff report
+router.put("/admin/:reportId/review", 
+  authorize(['admin']), 
+  authLimiter,
+  StaffReportController.reviewReport
+);
+
 export default router;
 

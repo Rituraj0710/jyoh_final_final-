@@ -4,12 +4,13 @@ const formsDataSchema = new mongoose.Schema({
   formId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'Form'
+    // Stores ID of the actual deed (TrustDeed, SaleDeed, etc.)
+    // Note: ref is just for Mongoose docs, actual model varies by serviceType
   },
   serviceType: {
     type: String,
     required: true,
-    enum: ['sale-deed', 'will-deed', 'trust-deed', 'property-registration', 'power-of-attorney', 'adoption-deed'],
+    enum: ['sale-deed', 'will-deed', 'trust-deed', 'property-registration', 'power-of-attorney', 'adoption-deed', 'property-sale-certificate'],
     trim: true
   },
   userId: {

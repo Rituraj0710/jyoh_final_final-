@@ -21,6 +21,8 @@ router.put('/forms/:id/update', authLimiter, Staff4Controller.updateForm);
 
 // Work report routes
 router.get('/work-data', authLimiter, Staff4Controller.getWorkData);
+router.post('/reports', authLimiter, Staff4Controller.submitWorkReport);
 router.post('/cross-verification-report', authLimiter, Staff4Controller.submitCrossVerificationReport);
+router.get('/reports', authLimiter, Staff4Controller.getWorkReports);
 
 export default router;

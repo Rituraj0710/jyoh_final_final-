@@ -164,19 +164,21 @@ export default function Staff4VerifiedFormsPage() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         <h3 className="text-sm font-medium text-gray-900">
-                          {form.formType?.replace(/_/g, ' ').toUpperCase() || 'FORM'}
+                          {form.serviceType?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || form.formType?.replace(/_/g, ' ').toUpperCase() || 'FORM'}
                         </h3>
                         {getStatusBadge(form.status)}
                       </div>
                       
                       <div className="mt-2 text-sm text-gray-500">
                         <p>Form ID: {form._id}</p>
+                        <p>Service Type: {form.serviceType?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || form.formType?.replace(/_/g, ' ').toUpperCase() || 'N/A'}</p>
                         {form.userId && (
                           <p>Submitted by: {form.userId.name || form.userId.email}</p>
                         )}
-                        <p>Cross-verified: {new Date(form.updatedAt).toLocaleDateString()}</p>
-                        {form.approvals?.staff4?.verifiedAt && (
+                        {form.approvals?.staff4?.verifiedAt ? (
                           <p>Verified at: {new Date(form.approvals.staff4.verifiedAt).toLocaleString()}</p>
+                        ) : (
+                          <p>Cross-verified: {new Date(form.updatedAt).toLocaleDateString()}</p>
                         )}
                       </div>
 

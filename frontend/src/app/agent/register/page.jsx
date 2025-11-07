@@ -278,7 +278,7 @@ export default function AgentRegisterPage() {
                 href="/agent/login"
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
-                Sign in here
+                Login
               </Link>
             </p>
           </div>

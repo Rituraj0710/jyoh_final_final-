@@ -1010,6 +1010,295 @@ class Staff5Controller {
       });
     }
   }
+
+  /**
+   * Submit Staff5 work report
+   */
+  static async submitWorkReport(req, res) {
+    try {
+      const { 
+        completedTasks,
+        workSummary,
+        issuesEncountered,
+        recommendations,
+        formsProcessed 
+      } = req.body;
+
+      // Get all staff reports for this staff member that are not yet submitted
+      const pendingReports = await StaffReport.find({
+        staffId: req.user.id,
+        isSubmitted: false
+      }).populate('formId', 'serviceType formTitle status');
+
+      // Mark all pending reports as submitted
+      await StaffReport.updateMany(
+        { staffId: req.user.id, isSubmitted: false },
+        { 
+          isSubmitted: true,
+          submittedAt: new Date(),
+          reviewNotes: workSummary
+        }
+      );
+
+      // Create a comprehensive work report entry (same format as Staff1/Staff2/Staff3/Staff4)
+      const workReportData = {
+        staffId: req.user.id,
+        formId: null, // This is a general work report, not tied to specific form
+        formType: 'work-report',
+        verificationStatus: 'pending',
+        remarks: workSummary,
+        verificationNotes: `
+          Completed Tasks: ${completedTasks?.join(', ') || 'None specified'}
+          
+          Work Summary: ${workSummary || 'No summary provided'}
+          
+          Issues Encountered: ${issuesEncountered || 'None reported'}
+          
+          Recommendations: ${recommendations || 'None provided'}
+          
+          Forms Processed: ${formsProcessed || pendingReports.length}
+          
+          Report Details:
+          ${pendingReports.map(report => 
+            `- ${report.formId?.serviceType || 'Unknown'}: ${report.verificationStatus || 'processed'}`
+          ).join('\n')}
+        `,
+        isSubmitted: true,
+        submittedAt: new Date()
+      };
+
+      // Create work report entry
+      const workReport = new StaffReport(workReportData);
+      await workReport.save();
+
+      // Log activity
+      await AuditLog.logAction({
+        userId: req.user.id,
+        userRole: req.user.role,
+        action: 'work_report_submission',
+        resource: 'staff_reports',
+        resourceId: workReport._id,
+        details: `Staff5 submitted work report with ${pendingReports.length} processed forms`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        status: 'success',
+        message: 'Work report submitted successfully',
+        data: {
+          workReport,
+          processedForms: pendingReports.length,
+          submittedReports: pendingReports
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error submitting Staff5 work report:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: error.message || 'Error submitting work report'
+      });
+    }
+  }
+
+  /**
+   * Get today's work data for final report submission
+   */
+  static async getWorkData(req, res) {
+    try {
+      const { date } = req.query;
+      const userId = req.user.id;
+      
+      const today = new Date(date || new Date());
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Get forms locked today by this Staff5 user
+      const lockedForms = await FormsData.find({
+        'approvals.staff5.locked': true,
+        'approvals.staff5.lockedBy': userId,
+        'approvals.staff5.lockedAt': { $gte: today, $lt: tomorrow }
+      }).select('_id serviceType approvals');
+
+      // Separate forms by final decision
+      const formsApproved = lockedForms
+        .filter(form => form.approvals?.staff5?.finalDecision === 'approved')
+        .map(form => form._id.toString());
+      
+      const formsRejected = lockedForms
+        .filter(form => form.approvals?.staff5?.finalDecision === 'rejected')
+        .map(form => form._id.toString());
+
+      const totalFormsProcessed = lockedForms.length;
+
+      logger.info(`Staff5 getWorkData: Found ${formsApproved.length} approved, ${formsRejected.length} rejected forms for date ${date || 'today'}`);
+
+      res.json({
+        status: 'success',
+        data: {
+          formsApproved,
+          formsRejected,
+          totalFormsProcessed
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error getting Staff5 work data:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Error retrieving work data'
+      });
+    }
+  }
+
+  /**
+   * Submit final report
+   */
+  static async submitFinalReport(req, res) {
+    try {
+      const {
+        date,
+        formsApproved = [],
+        formsRejected = [],
+        totalFormsProcessed = 0,
+        finalNotes = '',
+        recommendations = ''
+      } = req.body;
+
+      const userId = req.user.id;
+
+      logger.info(`Staff5 submitFinalReport called by user: ${userId}`);
+      logger.info(`Report data:`, {
+        date,
+        formsApproved: formsApproved.length,
+        formsRejected: formsRejected.length,
+        totalFormsProcessed
+      });
+
+      // Validate that at least one form is processed
+      if (formsApproved.length === 0 && formsRejected.length === 0) {
+        return res.status(400).json({
+          status: 'failed',
+          message: 'Please select at least one form that was processed today.'
+        });
+      }
+
+      // Create a comprehensive final report entry
+      const reportData = {
+        staffId: userId,
+        formId: null, // This is a general final report, not tied to a specific form
+        formType: 'final-report',
+        verificationStatus: 'submitted',
+        remarks: finalNotes || 'Final report submitted',
+        verificationNotes: `
+          Final Report - ${date}
+          
+          Forms Approved/Locked: ${formsApproved.length}
+          ${formsApproved.map(id => `  - ${id}`).join('\n')}
+          
+          Forms Rejected: ${formsRejected.length}
+          ${formsRejected.map(id => `  - ${id}`).join('\n')}
+          
+          Total Forms Processed: ${totalFormsProcessed || (formsApproved.length + formsRejected.length)}
+          
+          Final Notes: ${finalNotes || 'No notes provided'}
+          
+          Recommendations: ${recommendations || 'No recommendations provided'}
+        `,
+        isSubmitted: true,
+        submittedAt: new Date(),
+        // Store additional metadata
+        metadata: {
+          formsApproved,
+          formsRejected,
+          totalFormsProcessed,
+          recommendations,
+          reportDate: date
+        }
+      };
+
+      const workReport = new StaffReport(reportData);
+      await workReport.save();
+
+      logger.info(`Staff5 final report submitted successfully. Report ID: ${workReport._id}`);
+
+      // Log the action
+      await AuditLog.logAction({
+        userId: userId,
+        userRole: req.user.role,
+        action: 'final_report_submission',
+        resource: 'staff_reports',
+        resourceId: workReport._id,
+        details: `Staff5 submitted final report with ${formsApproved.length} approved, ${formsRejected.length} rejected`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        status: 'success',
+        message: 'Final report submitted successfully',
+        data: {
+          workReport,
+          formsApproved: formsApproved.length,
+          formsRejected: formsRejected.length,
+          totalFormsProcessed: totalFormsProcessed || (formsApproved.length + formsRejected.length)
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error submitting Staff5 final report:', error);
+      logger.error('Error stack:', error.stack);
+      res.status(500).json({
+        status: 'failed',
+        message: error.message || 'Error submitting final report',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
+  }
+
+  /**
+   * Get Staff5's work reports
+   */
+  static async getWorkReports(req, res) {
+    try {
+      const { page = 1, limit = 10, status } = req.query;
+      const skip = (page - 1) * limit;
+
+      const query = { staffId: req.user.id };
+      if (status) query.verificationStatus = status;
+
+      const reports = await StaffReport.find(query)
+        .populate('formId', 'serviceType formTitle status fields')
+        .populate('reviewedBy', 'name email role')
+        .sort({ createdAt: -1 })
+        .limit(parseInt(limit))
+        .skip(parseInt(skip));
+
+      const total = await StaffReport.countDocuments(query);
+
+      res.json({
+        status: 'success',
+        data: {
+          reports,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            pages: Math.ceil(total / limit)
+          }
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error getting Staff5 work reports:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Error retrieving work reports'
+      });
+    }
+  }
 }
 
 export default Staff5Controller;

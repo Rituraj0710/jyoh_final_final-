@@ -34,8 +34,9 @@ export default function Staff3FormDetailPage() {
       if (response.ok) {
         const data = await response.json();
         setForm(data.data.form);
-        // Initialize editable fields with current form data
-        setEditableFields(data.data.form.data || {});
+        // Use allFields which contains merged data from FormsData and original collection
+        const formFields = data.data.form.allFields || data.data.form.data || {};
+        setEditableFields(formFields);
       } else {
         throw new Error('Failed to fetch form details');
       }
@@ -229,6 +230,218 @@ export default function Staff3FormDetailPage() {
                   </div>
                 </div>
 
+                {/* Property Description Section - for Sale Deed and other forms */}
+                {form?.serviceType === 'sale-deed' && (
+                  <div className="space-y-6 mb-8">
+                    <h3 className="text-lg font-medium text-gray-900">Property Description</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.state || ''}
+                            onChange={(e) => handleFieldChange('state', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.state || editableFields.state || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.district || ''}
+                            onChange={(e) => handleFieldChange('district', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.district || editableFields.district || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Tehsil</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.tehsil || ''}
+                            onChange={(e) => handleFieldChange('tehsil', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.tehsil || editableFields.tehsil || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Village / Locality</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.village || ''}
+                            onChange={(e) => handleFieldChange('village', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.village || editableFields.village || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Khasra Number</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.khasraNo || ''}
+                            onChange={(e) => handleFieldChange('khasraNo', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.khasraNo || editableFields.khasraNo || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Plot Number</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.plotNo || ''}
+                            onChange={(e) => handleFieldChange('plotNo', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.plotNo || editableFields.plotNo || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Colony Name</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.colonyName || ''}
+                            onChange={(e) => handleFieldChange('colonyName', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.colonyName || editableFields.colonyName || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ward Number</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.wardNo || ''}
+                            onChange={(e) => handleFieldChange('wardNo', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.wardNo || editableFields.wardNo || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Street Number</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.streetNo || ''}
+                            onChange={(e) => handleFieldChange('streetNo', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.streetNo || editableFields.streetNo || 'Not provided'}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Property Directions Section - for Sale Deed */}
+                {form?.serviceType === 'sale-deed' && (
+                  <div className="space-y-6 mb-8">
+                    <h3 className="text-lg font-medium text-gray-900">Property Directions (North, East, South, West)</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          North (उत्तर)
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.directionNorth || ''}
+                            onChange={(e) => handleFieldChange('directionNorth', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            placeholder="Enter what is on the North side"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.directionNorth || editableFields.directionNorth || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          East (पूर्व)
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.directionEast || ''}
+                            onChange={(e) => handleFieldChange('directionEast', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            placeholder="Enter what is on the East side"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.directionEast || editableFields.directionEast || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          South (दक्षिण)
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.directionSouth || ''}
+                            onChange={(e) => handleFieldChange('directionSouth', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            placeholder="Enter what is on the South side"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.directionSouth || editableFields.directionSouth || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          West (पश्चिम)
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.directionWest || ''}
+                            onChange={(e) => handleFieldChange('directionWest', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            placeholder="Enter what is on the West side"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{form?.allFields?.directionWest || editableFields.directionWest || 'Not provided'}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Land Details Section */}
                 {verificationType === 'land' && (
                   <div className="space-y-6">
@@ -244,10 +457,10 @@ export default function Staff3FormDetailPage() {
                             type="text"
                             value={editableFields.landOwner || ''}
                             onChange={(e) => handleFieldChange('landOwner', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         ) : (
-                          <p className="text-sm text-gray-900">{form.data?.landOwner || 'Not provided'}</p>
+                          <p className="text-sm text-gray-900">{editableFields.landOwner || form?.allFields?.landOwner || 'Not provided'}</p>
                         )}
                       </div>
 
@@ -259,7 +472,7 @@ export default function Staff3FormDetailPage() {
                           <select
                             value={editableFields.landType || ''}
                             onChange={(e) => handleFieldChange('landType', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                           >
                             <option value="">Select Land Type</option>
                             <option value="residential">Residential</option>
@@ -269,7 +482,7 @@ export default function Staff3FormDetailPage() {
                             <option value="mixed_use">Mixed Use</option>
                           </select>
                         ) : (
-                          <p className="text-sm text-gray-900">{form.data?.landType || 'Not provided'}</p>
+                          <p className="text-sm text-gray-900">{editableFields.landType || form?.allFields?.landType || 'Not provided'}</p>
                         )}
                       </div>
 
@@ -282,10 +495,10 @@ export default function Staff3FormDetailPage() {
                             value={editableFields.landLocation || ''}
                             onChange={(e) => handleFieldChange('landLocation', e.target.value)}
                             rows={3}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         ) : (
-                          <p className="text-sm text-gray-900">{form.data?.landLocation || 'Not provided'}</p>
+                          <p className="text-sm text-gray-900">{editableFields.landLocation || form?.allFields?.landLocation || 'Not provided'}</p>
                         )}
                       </div>
 
@@ -298,10 +511,10 @@ export default function Staff3FormDetailPage() {
                             type="text"
                             value={editableFields.surveyNumber || ''}
                             onChange={(e) => handleFieldChange('surveyNumber', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         ) : (
-                          <p className="text-sm text-gray-900">{form.data?.surveyNumber || 'Not provided'}</p>
+                          <p className="text-sm text-gray-900">{editableFields.surveyNumber || form?.allFields?.surveryNumber || 'Not provided'}</p>
                         )}
                       </div>
 
@@ -314,10 +527,10 @@ export default function Staff3FormDetailPage() {
                             type="number"
                             value={editableFields.landArea || ''}
                             onChange={(e) => handleFieldChange('landArea', e.target.value)}
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         ) : (
-                          <p className="text-sm text-gray-900">{form.data?.landArea || 'Not provided'} sq ft</p>
+                          <p className="text-sm text-gray-900">{editableFields.landArea || form?.allFields?.landArea || 'Not provided'} sq ft</p>
                         )}
                       </div>
                     </div>

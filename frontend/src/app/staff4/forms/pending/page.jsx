@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Staff4PendingFormsPage() {
+  const router = useRouter();
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,6 +17,21 @@ export default function Staff4PendingFormsPage() {
   });
   const [pagination, setPagination] = useState({});
   const { getAuthHeaders } = useAuth();
+
+  const handleCrossVerify = (formId) => {
+    if (!formId) {
+      console.error('Form ID is missing');
+      alert('Error: Form ID is missing');
+      return;
+    }
+    try {
+      console.log('Navigating to cross-verify form:', formId);
+      router.push(`/staff4/forms/${formId}`);
+    } catch (error) {
+      console.error('Error navigating to form:', error);
+      alert('Error navigating to form details. Please try again.');
+    }
+  };
 
   useEffect(() => {
     fetchForms();
@@ -238,12 +254,14 @@ export default function Staff4PendingFormsPage() {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Link
-                        href={`/staff4/forms/${form._id}`}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                      <button
+                        onClick={() => handleCrossVerify(form._id)}
+                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!form._id}
+                        title={form._id ? 'Click to cross-verify this form' : 'Form ID missing'}
                       >
                         Cross Verify
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </div>

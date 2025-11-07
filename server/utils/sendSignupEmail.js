@@ -1,7 +1,34 @@
 import transporter from "../config/emailConfig.js";
+import logger from "../config/logger.js";
+
+// Email validation function
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
 
 const sendSignupEmail = async (email, otp, name) => {
   try {
+    // Validate email format
+    if (!isValidEmail(email)) {
+      logger.error(`Invalid email format: ${email}`);
+      throw new Error(`Invalid email format: ${email}`);
+    }
+
+    // Verify transporter connection before sending
+    try {
+      await transporter.verify();
+      logger.info(`📧 SMTP connection verified`);
+    } catch (verifyError) {
+      logger.error(`❌ SMTP connection failed:`, {
+        error: verifyError.message,
+        code: verifyError.code,
+        smtpHost: process.env.EMAIL_HOST,
+        smtpUser: process.env.EMAIL_USER
+      });
+      throw new Error('SMTP server connection failed. Please check email configuration.');
+    }
+
     const mailOptions = {
       from: process.env.EMAIL_USER || 'noreply@example.com',
       to: email,
@@ -24,12 +51,35 @@ const sendSignupEmail = async (email, otp, name) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    
+    logger.info(`✅ Verification email sent successfully: ${email}`, {
+      messageId: info.messageId,
+      response: info.response,
+      accepted: info.accepted,
+      rejected: info.rejected
+    });
+    
+    // Warn if email was rejected by SMTP server
+    if (info.rejected && info.rejected.length > 0) {
+      logger.warn(`⚠️ Email rejected by SMTP server: ${email}`, {
+        rejected: info.rejected,
+        response: info.response
+      });
+    }
+    
     console.log(`Verification email sent to ${email}`);
     return true;
   } catch (error) {
-    console.error('Error sending verification email:', error);
-    throw error;
+    logger.error(`❌ Error sending verification email to ${email}:`, {
+      error: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
+    
+    // Re-throw with more context
+    throw new Error(`Failed to send verification email: ${error.message}`);
   }
 };
 

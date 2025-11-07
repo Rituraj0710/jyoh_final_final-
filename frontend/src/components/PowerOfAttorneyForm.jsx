@@ -474,33 +474,33 @@ const PowerOfAttorneyFormContent = () => {
   };
 
   const renderPartySection = (type, parties, sectionNumber) => (
-    <div className="bg-gray-50 p-4 md:p-6 rounded-lg border border-gray-200 mb-6">
-      <h3 className="text-lg md:text-xl font-semibold text-blue-600 border-b-2 border-blue-600 pb-2 mb-4">
+    <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200 mb-3">
+      <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-600 border-b-2 border-blue-600 pb-1.5 mb-2">
         {sectionNumber}. {translations[currentLang][`section-${sectionNumber}-heading`]}
       </h3>
       
       {parties.map((party, index) => (
-        <div key={index} className="bg-white p-4 rounded-lg border border-dashed border-gray-300 mb-4 relative">
+        <div key={index} className="bg-white p-2 sm:p-3 rounded-lg border border-dashed border-gray-300 mb-2 sm:mb-3 relative">
           {parties.length > 1 && (
             <button
               type="button"
               onClick={() => removeParty(type, index)}
-              className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+              className="absolute top-1 right-1 bg-red-500 text-white px-2 py-0.5 rounded text-xs hover:bg-red-600"
             >
               {translations[currentLang]['btn-remove']}
             </button>
           )}
           
-          <h4 className="font-medium text-gray-700 mb-4">
+          <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">
             {translations[currentLang]['label-party-name']} {index + 1}:
           </h4>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
             <div className="w-full flex gap-2">
               <select
                 value={party.prefix}
                 onChange={(e) => handleInputChange(`${type}Parties`, index, 'prefix', e.target.value)}
-                className="w-20 md:w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-16 sm:w-20 md:w-24 px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="Shri">श्री</option>
                 <option value="Smt">श्रीमती</option>
@@ -514,7 +514,7 @@ const PowerOfAttorneyFormContent = () => {
                   const error = validateField('name', e.target.value);
                   setErrors(prev => ({ ...prev, [`${type}Parties_${index}_name`]: error }));
                 }}
-                className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`flex-1 px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                   errors[`${type}Parties_${index}_name`] ? 'border-red-500' : 'border-gray-300'
                 }`}
                 required
@@ -531,7 +531,7 @@ const PowerOfAttorneyFormContent = () => {
                   const error = validateField('fatherName', e.target.value);
                   setErrors(prev => ({ ...prev, [`${type}Parties_${index}_fatherName`]: error }));
                 }}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                   errors[`${type}Parties_${index}_fatherName`] ? 'border-red-500' : 'border-gray-300'
                 }`}
                 required
@@ -552,7 +552,7 @@ const PowerOfAttorneyFormContent = () => {
                     const error = validateField('age', e.target.value);
                     setErrors(prev => ({ ...prev, [`${type}Parties_${index}_age`]: error }));
                   }}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     errors[`${type}Parties_${index}_age`] ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -567,7 +567,7 @@ const PowerOfAttorneyFormContent = () => {
               <select
                 value={party.occupation}
                 onChange={(e) => handleInputChange(`${type}Parties`, index, 'occupation', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="Service">सेवा</option>
                 <option value="Business">व्यवसाय</option>
@@ -580,7 +580,7 @@ const PowerOfAttorneyFormContent = () => {
               <select
                 value={party.idType}
                 onChange={(e) => handleInputChange(`${type}Parties`, index, 'idType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="Aadhaar">आधार</option>
                 <option value="Voter ID">वोटर आईडी</option>
@@ -598,7 +598,7 @@ const PowerOfAttorneyFormContent = () => {
                   const error = validateField('idNo', e.target.value);
                   setErrors(prev => ({ ...prev, [`${type}Parties_${index}_idNo`]: error }));
                 }}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                   errors[`${type}Parties_${index}_idNo`] ? 'border-red-500' : 'border-gray-300'
                 }`}
                 required
@@ -609,21 +609,21 @@ const PowerOfAttorneyFormContent = () => {
             </div>
           </div>
           
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mt-2 sm:mt-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
               {translations[currentLang]['label-id-photo']}
             </label>
             
             {/* File Upload Option */}
-            <div className="mb-4">
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="mb-2 sm:mb-3">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
                 <input
                   type="file"
                   accept="image/*,.pdf"
                   onChange={(e) => handleFileChange(`${type}Parties`, index, 'idPhoto', e.target.files[0])}
-                  className="w-full md:flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full md:flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
-                <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
                   {previewPhotos[`${type}Parties_${index}_idPhoto`] ? (
                     <img
                       src={previewPhotos[`${type}Parties_${index}_idPhoto`]}
@@ -640,8 +640,8 @@ const PowerOfAttorneyFormContent = () => {
             </div>
 
             {/* Camera Capture Option */}
-            <div className="border-t border-gray-200 pt-4">
-              <p className="text-sm text-gray-600 mb-3">Or capture a photo using your camera:</p>
+            <div className="border-t border-gray-200 pt-2 sm:pt-3">
+              <p className="text-xs text-gray-600 mb-2">Or capture a photo using your camera:</p>
               <CameraCapture
                 onCapture={(file, imageSrc) => handleCameraCapture(`${type}Parties`, index, 'idPhoto', file, imageSrc)}
                 label="Capture ID Document"
@@ -654,12 +654,12 @@ const PowerOfAttorneyFormContent = () => {
             </div>
           </div>
           
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mt-2 sm:mt-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
               {translations[currentLang]['label-address']}
             </label>
             <textarea
-              rows="3"
+              rows="2"
               placeholder={translations[currentLang]['label-address']}
               value={party.address}
               onChange={(e) => {
@@ -677,21 +677,21 @@ const PowerOfAttorneyFormContent = () => {
             )}
           </div>
           
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mt-2 sm:mt-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
               {translations[currentLang]['label-photo']}
             </label>
             
             {/* File Upload Option */}
-            <div className="mb-4">
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="mb-2 sm:mb-3">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileChange(`${type}Parties`, index, 'photo', e.target.files[0])}
-                  className="w-full md:flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full md:flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
-                <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
                   {previewPhotos[`${type}Parties_${index}_photo`] ? (
                     <img
                       src={previewPhotos[`${type}Parties_${index}_photo`]}
@@ -708,7 +708,7 @@ const PowerOfAttorneyFormContent = () => {
             </div>
 
             {/* Camera Capture Option */}
-            <div className="border-t border-gray-200 pt-4">
+            <div className="border-t border-gray-200 pt-2 sm:pt-3">
               <p className="text-sm text-gray-600 mb-3">Or capture a passport photo using your camera:</p>
               <CameraCapture
                 onCapture={(file, imageSrc) => handleCameraCapture(`${type}Parties`, index, 'photo', file, imageSrc)}
@@ -727,7 +727,7 @@ const PowerOfAttorneyFormContent = () => {
       <button
         type="button"
         onClick={() => addParty(type)}
-        className="w-full md:w-auto bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+        className="w-full md:w-auto bg-blue-500 text-white px-3 py-1.5 text-xs rounded hover:bg-blue-600 transition-colors"
       >
         {translations[currentLang][`btn-add-${type}`]}
       </button>
@@ -735,16 +735,16 @@ const PowerOfAttorneyFormContent = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 w-full px-2 sm:px-4 lg:px-6 py-3">
+      <div className="w-full">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-3">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 sm:gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                 {translations[currentLang]['form-heading']}
               </h1>
-              <p className="text-sm text-gray-600 mt-1">Complete power of attorney documentation with all required parties and legal formalities.</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5">Complete power of attorney documentation with all required parties and legal formalities.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2">
@@ -773,21 +773,21 @@ const PowerOfAttorneyFormContent = () => {
         </div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <p className="text-center text-gray-600 mb-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+        <p className="text-center text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
           {translations[currentLang]['form-subheading']}
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {/* Document Details */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+          <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 pb-1.5 border-b border-gray-200">
               {translations[currentLang]['section-1-heading']}
             </h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">
                   {translations[currentLang]['label-executionDate']}
                 </label>
                 <input
@@ -798,7 +798,7 @@ const PowerOfAttorneyFormContent = () => {
                     const error = validateField('executionDate', e.target.value);
                     setErrors(prev => ({ ...prev, executionDate: error }));
                   }}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     errors.executionDate ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -809,7 +809,7 @@ const PowerOfAttorneyFormContent = () => {
               </div>
               
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">
                   {translations[currentLang]['label-state']}
                 </label>
                 <select
@@ -819,7 +819,7 @@ const PowerOfAttorneyFormContent = () => {
                     const error = validateField('state', e.target.value);
                     setErrors(prev => ({ ...prev, state: error }));
                   }}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     errors.state ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -835,7 +835,7 @@ const PowerOfAttorneyFormContent = () => {
               </div>
               
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">
                   {translations[currentLang]['label-district']}
                 </label>
                 <select
@@ -845,7 +845,7 @@ const PowerOfAttorneyFormContent = () => {
                     const error = validateField('district', e.target.value);
                     setErrors(prev => ({ ...prev, district: error }));
                   }}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     errors.district ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -863,7 +863,7 @@ const PowerOfAttorneyFormContent = () => {
               </div>
               
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">
                   {translations[currentLang]['label-tehsil']}
                 </label>
                 <select
@@ -873,7 +873,7 @@ const PowerOfAttorneyFormContent = () => {
                     const error = validateField('tehsil', e.target.value);
                     setErrors(prev => ({ ...prev, tehsil: error }));
                   }}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     errors.tehsil ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -891,7 +891,7 @@ const PowerOfAttorneyFormContent = () => {
               </div>
               
               <div className="w-full md:col-span-2 lg:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">
                   {translations[currentLang]['label-subRegistrarOffice']}
                 </label>
                 <select
@@ -901,7 +901,7 @@ const PowerOfAttorneyFormContent = () => {
                     const error = validateField('subRegistrarOffice', e.target.value);
                     setErrors(prev => ({ ...prev, subRegistrarOffice: error }));
                   }}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     errors.subRegistrarOffice ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -927,24 +927,24 @@ const PowerOfAttorneyFormContent = () => {
           {renderPartySection('agent', formData.agentParties, 3)}
 
           {/* Powers Granted */}
-          <div className="bg-gray-50 p-4 md:p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg md:text-xl font-semibold text-blue-600 border-b-2 border-blue-600 pb-2 mb-4">
+          <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+            <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-600 border-b-2 border-blue-600 pb-1.5 mb-2">
               {translations[currentLang]['section-4-heading']}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-xs text-gray-600 mb-2 sm:mb-3">
               {translations[currentLang]['powers-subheading']}
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 mb-2 sm:mb-3">
               {powerOptions.map((power, index) => (
-                <label key={index} className="flex items-center p-2 hover:bg-gray-100 rounded">
+                <label key={index} className="flex items-center p-1.5 hover:bg-gray-100 rounded">
                   <input
                     type="checkbox"
                     checked={formData.powers.includes(power.value)}
                     onChange={() => handlePowerChange(power.value)}
-                    className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="mr-2 h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <span className="text-gray-700 text-sm md:text-base">{translations[currentLang][power.label]}</span>
+                  <span className="text-gray-700 text-xs">{translations[currentLang][power.label]}</span>
                 </label>
               ))}
             </div>
@@ -955,26 +955,26 @@ const PowerOfAttorneyFormContent = () => {
                   type="checkbox"
                   checked={formData.powers.includes('Other')}
                   onChange={() => handlePowerChange('Other')}
-                  className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="mr-2 h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="text-gray-700">{translations[currentLang]['label-power-other']}</span>
+                  <span className="text-gray-700 text-xs">{translations[currentLang]['label-power-other']}</span>
               </label>
               {formData.powers.includes('Other') && (
                 <textarea
-                  rows="4"
+                  rows="2"
                   placeholder="विस्तृत अधिकार लिखें..."
                   value={formData.otherPowersText}
                   onChange={(e) => setFormData(prev => ({ ...prev, otherPowersText: e.target.value }))}
-                  className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full mt-2 px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               )}
             </div>
             
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-2">
               <button
                 type="button"
                 onClick={selectAllPowers}
-                className="w-full md:w-auto bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+                className="w-full md:w-auto bg-green-500 text-white px-3 py-1.5 text-xs rounded hover:bg-green-600 transition-colors"
               >
                 {translations[currentLang]['btn-select-all']}
               </button>
@@ -984,40 +984,40 @@ const PowerOfAttorneyFormContent = () => {
                   type="checkbox"
                   checked={formData.generalPowerCheckbox}
                   onChange={(e) => setFormData(prev => ({ ...prev, generalPowerCheckbox: e.target.checked }))}
-                  className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="mr-2 h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="text-gray-700 text-sm md:text-base">{translations[currentLang]['label-general-power']}</span>
+                <span className="text-gray-700 text-xs">{translations[currentLang]['label-general-power']}</span>
               </label>
             </div>
             
             {errors.powers && (
-              <p className="text-red-500 text-sm mt-2">{errors.powers}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.powers}</p>
             )}
           </div>
 
           {/* Properties */}
-          <div className="bg-gray-50 p-4 md:p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg md:text-xl font-semibold text-blue-600 border-b-2 border-blue-600 pb-2 mb-4">
+          <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+            <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-600 border-b-2 border-blue-600 pb-1.5 mb-2">
               {translations[currentLang]['section-5-heading']}
             </h3>
             
             {formData.properties.map((property, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg border border-dashed border-gray-300 mb-4 relative">
+              <div key={index} className="bg-white p-2 sm:p-3 rounded-lg border border-dashed border-gray-300 mb-2 sm:mb-3 relative">
                 {formData.properties.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeProperty(index)}
-                    className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                    className="absolute top-1 right-1 bg-red-500 text-white px-2 py-0.5 rounded text-xs hover:bg-red-600"
                   >
                     {translations[currentLang]['btn-remove']}
                   </button>
                 )}
                 
-                <h4 className="font-medium text-gray-700 mb-4">Property {index + 1}:</h4>
+                <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Property {index + 1}:</h4>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                   <div className="w-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-0.5">
                       {translations[currentLang]['label-property-type']}
                     </label>
                     <select
@@ -1027,7 +1027,7 @@ const PowerOfAttorneyFormContent = () => {
                         newProperties[index].mainPropertyType = e.target.value;
                         setFormData(prev => ({ ...prev, properties: newProperties }));
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
                       <option value="">-- चुनें --</option>
                       <option value="Immovable">अचल संपत्ति (Immovable)</option>
@@ -1039,11 +1039,11 @@ const PowerOfAttorneyFormContent = () => {
                   {(property.mainPropertyType === 'Immovable' || property.mainPropertyType === 'Both') && (
                     <>
                       <div className="w-full md:col-span-2 lg:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-0.5">
                           {translations[currentLang]['label-property-address']}
                         </label>
                         <textarea
-                          rows="3"
+                          rows="2"
                           placeholder={translations[currentLang]['label-property-address']}
                           value={property.propertyAddress}
                           onChange={(e) => {
@@ -1051,7 +1051,7 @@ const PowerOfAttorneyFormContent = () => {
                             newProperties[index].propertyAddress = e.target.value;
                             setFormData(prev => ({ ...prev, properties: newProperties }));
                           }}
-                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                             errors[`property_${index}_address`] ? 'border-red-500' : 'border-gray-300'
                           }`}
                         />
@@ -1061,7 +1061,7 @@ const PowerOfAttorneyFormContent = () => {
                       </div>
                       
                       <div className="w-full">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-0.5">
                           {translations[currentLang]['label-property-type-specific']}
                         </label>
                         <select
@@ -1071,7 +1071,7 @@ const PowerOfAttorneyFormContent = () => {
                             newProperties[index].propertyType = e.target.value;
                             setFormData(prev => ({ ...prev, properties: newProperties }));
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
                           <option value="">-- चुनें --</option>
                           <option value="Residential">आवासीय (Residential)</option>
@@ -1093,7 +1093,7 @@ const PowerOfAttorneyFormContent = () => {
                             newProperties[index].totalPlotArea = e.target.value;
                             setFormData(prev => ({ ...prev, properties: newProperties }));
                           }}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                         <select
                           value={property.totalPlotUnit}
@@ -1102,7 +1102,7 @@ const PowerOfAttorneyFormContent = () => {
                             newProperties[index].totalPlotUnit = e.target.value;
                             setFormData(prev => ({ ...prev, properties: newProperties }));
                           }}
-                          className="w-full md:w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full md:w-32 px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
                           <option value="sqft">Sq. Ft.</option>
                           <option value="sqm">Sq. Mtr.</option>
@@ -1115,11 +1115,11 @@ const PowerOfAttorneyFormContent = () => {
                   
                   {(property.mainPropertyType === 'Movable' || property.mainPropertyType === 'Both') && (
                     <div className="w-full md:col-span-2 lg:col-span-3">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         {translations[currentLang]['label-movable-details']}
                       </label>
                       <textarea
-                        rows="4"
+                        rows="2"
                         placeholder="जैसे: बैंक खाता, वाहन, शेयर, गहने आदि।"
                         value={property.movablePropertyDetails}
                         onChange={(e) => {
@@ -1127,7 +1127,7 @@ const PowerOfAttorneyFormContent = () => {
                           newProperties[index].movablePropertyDetails = e.target.value;
                           setFormData(prev => ({ ...prev, properties: newProperties }));
                         }}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                           errors[`property_${index}_movable`] ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
@@ -1143,7 +1143,7 @@ const PowerOfAttorneyFormContent = () => {
             <button
               type="button"
               onClick={addProperty}
-              className="w-full md:w-auto bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+              className="w-full md:w-auto bg-blue-500 text-white px-3 py-1.5 text-xs rounded hover:bg-blue-600 transition-colors"
             >
               {translations[currentLang]['btn-add-property']}
             </button>
@@ -1153,11 +1153,11 @@ const PowerOfAttorneyFormContent = () => {
           {renderPartySection('witness', formData.witnessParties, 6)}
 
           {/* Submit Button */}
-          <div className="flex justify-center">
+          <div className="flex justify-center pt-2 sm:pt-3">
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full md:w-auto bg-green-500 text-white px-8 py-3 rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
+              className="w-full md:w-auto bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-medium"
             >
               {isLoading ? 'Submitting...' : translations[currentLang]['btn-submit']}
             </button>

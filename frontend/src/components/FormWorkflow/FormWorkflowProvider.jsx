@@ -120,9 +120,46 @@ export const FormWorkflowProvider = ({ children, formType }) => {
       
       // Submit form data directly to backend
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
-      const headers = {
-        'Content-Type': 'application/json',
-      };
+      
+      // For sale-deed, we need to convert JSON to FormData format
+      let body;
+      let headers = {};
+      
+      if (formType === 'sale-deed') {
+        // Convert to FormData for multipart submission
+        body = new FormData();
+        
+        // Add all form fields
+        Object.keys(data).forEach(key => {
+          if (key !== 'files' && key !== 'calculations' && key !== 'amount' && key !== 'formType') {
+            if (typeof data[key] === 'object' && !Array.isArray(data[key])) {
+              // Nested objects
+              Object.keys(data[key]).forEach(nestedKey => {
+                body.append(`${key}_${nestedKey}`, data[key][nestedKey]);
+              });
+            } else if (Array.isArray(data[key])) {
+              // Arrays
+              if (key === 'sellers' || key === 'buyers' || key === 'witnesses') {
+                data[key].forEach((item, index) => {
+                  Object.keys(item).forEach(itemKey => {
+                    body.append(`${key}_${index + 1}_${itemKey}`, item[itemKey]);
+                  });
+                });
+              } else {
+                data[key].forEach((item, index) => {
+                  body.append(`${key}_${index + 1}`, item);
+                });
+              }
+            } else {
+              body.append(key, data[key]);
+            }
+          }
+        });
+      } else {
+        // For other forms, use JSON
+        headers['Content-Type'] = 'application/json';
+        body = JSON.stringify(data);
+      }
       
       // Add authorization header if token exists
       if (token) {
@@ -133,7 +170,7 @@ export const FormWorkflowProvider = ({ children, formType }) => {
         method: 'POST',
         headers,
         credentials: 'include',
-        body: JSON.stringify(data),
+        body,
       });
 
       if (!response.ok) {

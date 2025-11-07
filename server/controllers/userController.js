@@ -857,9 +857,10 @@ class UserController {
         return errorResponse(res, 'Access denied', null, 403);
       }
 
-      // Only allow download for completed forms
-      if (formData.status !== 'completed') {
-        return errorResponse(res, 'Only completed forms can be downloaded', null, 400);
+      // Allow download for submitted/approved/completed forms
+      const allowedStatuses = ['submitted', 'under_review', 'in-progress', 'cross_verified', 'verified', 'approved', 'completed'];
+      if (!allowedStatuses.includes(formData.status)) {
+        return errorResponse(res, 'Form must be submitted before it can be downloaded', null, 400);
       }
 
       // Generate PDF
@@ -876,18 +877,61 @@ class UserController {
       return res.send(pdfBuffer);
     } catch (error) {
       logger.error('Error downloading user form:', error);
+      logger.error('Error stack:', error.stack);
       await this.logActivity('User Form Download Error', req.user.id, req.params.id, 'Failure', error.message);
-      return errorResponse(res, 'Error downloading form', error.message, 500);
+      return errorResponse(res, 'Error downloading form', error.message || 'Unknown error occurred', 500);
     }
   };
 
   // Generate PDF from form data
   static generateFormPDF = async (formData) => {
     try {
-      // For now, we'll create a simple PDF using a basic approach
-      // In production, you might want to use libraries like puppeteer or pdfkit
-      const PDFDocument = require('pdfkit');
-      const doc = new PDFDocument();
+      // Fetch original form if formId exists (before creating PDF)
+      if (formData.formId && formData.serviceType) {
+        try {
+          const modelMap = {
+            'will-deed': (await import('../models/WillDeed.js')).default,
+            'sale-deed': (await import('../models/SaleDeed.js')).default,
+            'trust-deed': (await import('../models/TrustDeed.js')).default,
+            'power-of-attorney': (await import('../models/PowerOfAttorney.js')).default,
+            'adoption-deed': (await import('../models/AdoptionDeed.js')).default,
+            'property-registration': (await import('../models/PropertyRegistration.js')).default,
+            'property-sale-certificate': (await import('../models/PropertySaleCertificate.js')).default
+          };
+
+          const Model = modelMap[formData.serviceType];
+          if (Model) {
+            const originalFormData = await Model.findById(formData.formId);
+            if (originalFormData) {
+              // Merge original form data into FormsData
+              const originalData = originalFormData.toObject();
+              // Remove MongoDB internal fields
+              delete originalData._id;
+              delete originalData.__v;
+              delete originalData.createdAt;
+              delete originalData.updatedAt;
+              // Merge into formData.data
+              if (!formData.data) formData.data = {};
+              Object.assign(formData.data, originalData);
+            }
+          }
+        } catch (error) {
+          logger.warn('Error fetching original form data for PDF:', error);
+        }
+      }
+
+      // Import PDFDocument dynamically for ES modules
+      const PDFDocument = (await import('pdfkit')).default;
+      const doc = new PDFDocument({ 
+        size: 'A4', 
+        margin: 50,
+        info: {
+          Title: `${formData.serviceType?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Form`,
+          Author: formData.userId?.name || 'User',
+          Subject: 'Form Submission',
+          Creator: 'Property Registration System'
+        }
+      });
       
       const buffers = [];
       doc.on('data', buffers.push.bind(buffers));
@@ -898,26 +942,168 @@ class UserController {
           resolve(pdfData);
         });
 
-        // Add content to PDF
-        doc.fontSize(20).text('Form Application', 100, 50);
-        doc.fontSize(12).text(`Form ID: ${formData._id}`, 100, 100);
-        doc.text(`Service Type: ${formData.serviceType}`, 100, 120);
-        doc.text(`Status: ${formData.status}`, 100, 140);
-        doc.text(`Submitted By: ${formData.userId.name}`, 100, 160);
-        doc.text(`Email: ${formData.userId.email}`, 100, 180);
-        doc.text(`Submitted At: ${new Date(formData.submittedAt || formData.createdAt).toLocaleString()}`, 100, 200);
-        
-        // Add form fields
-        doc.text('Form Details:', 100, 240);
-        let yPosition = 260;
-        
-        Object.entries(formData.fields).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== '') {
-            doc.text(`${key}: ${value}`, 120, yPosition);
-            yPosition += 20;
-          }
-        });
+        doc.on('error', reject);
 
+        // Helper function to format field names
+        const formatFieldName = (key) => {
+          return key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/[_-]/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase())
+            .trim();
+        };
+
+        // Helper function to format value
+        const formatValue = (value) => {
+          if (value === null || value === undefined) return 'N/A';
+          if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+          if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+            return JSON.stringify(value, null, 2);
+          }
+          if (Array.isArray(value)) {
+            return value.join(', ');
+          }
+          return String(value);
+        };
+
+        // Helper function to add section
+        const addSection = (title, yPos) => {
+          if (yPos > 750) {
+            doc.addPage();
+            yPos = 50;
+          }
+          doc.fontSize(14).font('Helvetica-Bold').text(title, 50, yPos);
+          yPos += 20;
+          doc.moveTo(50, yPos).lineTo(545, yPos).stroke();
+          yPos += 15;
+          doc.font('Helvetica').fontSize(10);
+          return yPos;
+        };
+
+        let yPos = 50;
+
+        // Header
+        doc.fontSize(20).font('Helvetica-Bold').text(
+          formData.serviceType?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Form',
+          50, yPos, { align: 'center' }
+        );
+        yPos += 30;
+
+        // Form Information Section
+        yPos = addSection('Form Information', yPos);
+        doc.text(`Form ID: ${formData._id}`, 60, yPos);
+        yPos += 15;
+        doc.text(`Service Type: ${formData.serviceType?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`, 60, yPos);
+        yPos += 15;
+        doc.text(`Status: ${formData.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`, 60, yPos);
+        yPos += 15;
+        doc.text(`Submitted By: ${formData.userId?.name || 'N/A'}`, 60, yPos);
+        yPos += 15;
+        doc.text(`Email: ${formData.userId?.email || 'N/A'}`, 60, yPos);
+        yPos += 15;
+        doc.text(`Submitted At: ${new Date(formData.submittedAt || formData.createdAt).toLocaleString()}`, 60, yPos);
+        yPos += 20;
+
+        // Get complete form data (priority: data > fields > rawFormData)
+        // Start with FormsData fields
+        let formFields = {};
+        if (formData.data && Object.keys(formData.data).length > 0) {
+          formFields = { ...formData.data };
+        } else if (formData.fields && Object.keys(formData.fields).length > 0) {
+          formFields = { ...formData.fields };
+        } else if (formData.rawFormData && Object.keys(formData.rawFormData).length > 0) {
+          formFields = { ...formData.rawFormData };
+        }
+
+        // Form Data Section
+        if (Object.keys(formFields).length > 0) {
+          yPos = addSection('Form Data', yPos);
+          
+          // Filter out internal fields
+          const excludeFields = ['_id', '__v', 'createdAt', 'updatedAt', 'formId', 'serviceType', 'status'];
+          
+          let fieldCount = 0;
+          for (const [key, value] of Object.entries(formFields)) {
+            if (excludeFields.includes(key)) continue;
+            if (value === null || value === undefined || value === '') continue;
+            
+            fieldCount++;
+            const fieldName = formatFieldName(key);
+            const fieldValue = formatValue(value);
+            
+            // Check if we need a new page
+            if (yPos > 750) {
+              doc.addPage();
+              yPos = 50;
+            }
+            
+            // Handle long values
+            const maxWidth = 495;
+            const labelWidth = 180;
+            
+            doc.font('Helvetica-Bold').fontSize(9).text(`${fieldName}:`, 60, yPos, { width: labelWidth });
+            doc.font('Helvetica').fontSize(9);
+            
+            // Calculate text height before rendering
+            const textHeight = doc.heightOfString(fieldValue, { width: maxWidth });
+            
+            if (textHeight > 300) {
+              // Very long value, truncate
+              const truncated = fieldValue.substring(0, 500) + '... (truncated)';
+              doc.text(truncated, 200, yPos, { width: maxWidth, continued: false });
+              yPos += 40;
+            } else {
+              doc.text(fieldValue, 200, yPos, { width: maxWidth, continued: false });
+              yPos += Math.max(textHeight / 9, 14); // Approximate line height
+            }
+            
+            yPos += 5;
+            
+            // Limit to prevent PDF from being too large
+            if (fieldCount > 100) {
+              doc.font('Helvetica-Italic').fontSize(9).text('... (Additional fields omitted for brevity)', 200, yPos);
+              yPos += 15;
+              break;
+            }
+          }
+        }
+
+        // Payment Information (if available)
+        if (formData.paymentInfo) {
+          yPos = addSection('Payment Information', yPos);
+          if (formData.paymentInfo.paymentAmount) {
+            doc.text(`Payment Amount: ₹${formData.paymentInfo.paymentAmount.toLocaleString('en-IN')}`, 60, yPos);
+            yPos += 15;
+          }
+          if (formData.paymentInfo.calculations) {
+            if (formData.paymentInfo.calculations.stampDuty) {
+              doc.text(`Stamp Duty: ₹${formData.paymentInfo.calculations.stampDuty.toLocaleString('en-IN')}`, 60, yPos);
+              yPos += 15;
+            }
+            if (formData.paymentInfo.calculations.registrationCharge) {
+              doc.text(`Registration Charge: ₹${formData.paymentInfo.calculations.registrationCharge.toLocaleString('en-IN')}`, 60, yPos);
+              yPos += 15;
+            }
+          }
+          if (formData.paymentInfo.paymentDate) {
+            doc.text(`Payment Date: ${new Date(formData.paymentInfo.paymentDate).toLocaleDateString()}`, 60, yPos);
+            yPos += 15;
+          }
+          if (formData.paymentInfo.paymentStatus) {
+            doc.text(`Payment Status: ${formData.paymentInfo.paymentStatus}`, 60, yPos);
+            yPos += 15;
+          }
+        }
+
+        // Add simple footer on last page
+        doc.fontSize(8).fillColor('gray').text(
+          `Generated on ${new Date().toLocaleString()}`,
+          50,
+          doc.page.height - 30,
+          { align: 'center' }
+        );
+
+        // Finalize PDF
         doc.end();
       });
     } catch (error) {

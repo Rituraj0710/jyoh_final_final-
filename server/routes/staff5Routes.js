@@ -18,9 +18,15 @@ router.get('/forms', authLimiter, Staff5Controller.getForms);
 router.get('/forms/:id', authLimiter, Staff5Controller.getFormById);
 router.put('/forms/:id/final-approval', authLimiter, Staff5Controller.finalApproval);
 
+// Work report routes
+router.post('/reports', authLimiter, Staff5Controller.submitWorkReport);
+router.get('/reports', authLimiter, Staff5Controller.getWorkReports);
+
 // Final reports routes
 router.get('/final-reports', authLimiter, Staff5Controller.getFinalReports);
 router.post('/generate-final-report/:formId', authLimiter, Staff5Controller.generateFinalReportPDF);
+router.get('/work-data', authLimiter, Staff5Controller.getWorkData);
+router.post('/final-report', authLimiter, Staff5Controller.submitFinalReport);
 
 // Certificate generation routes
 router.get('/generate-certificate/:formId', authLimiter, Staff5Controller.generateCertificatePDF);

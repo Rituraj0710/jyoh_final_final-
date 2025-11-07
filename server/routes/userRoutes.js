@@ -22,16 +22,16 @@ router.post("/reset-password/:id/:token", passwordResetLimiter, UserController.u
 
 
 // Protected Routes - Accessible by user, staff_*, and admin
-router.get("/profile", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.userProfile);
-router.post("/change-password", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.changeUserPassword);
-router.post("/logout", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.userLogout);
+router.get("/profile", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.userProfile);
+router.post("/change-password", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.changeUserPassword);
+router.post("/logout", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.userLogout);
 
-router.post("/contact", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), ContactController.submitContactForm);
+router.post("/contact", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), ContactController.submitContactForm);
 
 // User Forms Routes
-router.get("/forms", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.getUserForms);
-router.get("/forms/:id", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.getUserFormById);
-router.get("/forms/:id/download", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.downloadUserForm);
+router.get("/forms", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.getUserForms);
+router.get("/forms/:id", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.getUserFormById);
+router.get("/forms/:id/download", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.downloadUserForm);
 
 // Payment endpoints (temporary - to be moved to dedicated payment routes)
 router.post("/payment/initialize", (req, res) => {

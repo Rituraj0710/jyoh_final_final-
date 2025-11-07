@@ -12,8 +12,8 @@ const UserLayout = ({children}) => {
     setIsClient(true);
   }, []);
   
-  // Don't show sidebar on login, signup, register, or user selection pages
-  if (pathname === '/user/login' || pathname === '/user/signup' || pathname === '/user/register' || pathname === '/user') {
+  // Don't show sidebar on login, signup, register, verify-email, verify-otp, or user selection pages
+  if (pathname === '/user/login' || pathname === '/user/signup' || pathname === '/user/register' || pathname === '/user/verify-email' || pathname === '/user/verify-otp' || pathname === '/user') {
     return (
       <>
         {children}

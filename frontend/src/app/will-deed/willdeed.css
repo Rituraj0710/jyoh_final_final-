@@ -78,9 +78,21 @@ textarea[name$="Address[]"]::placeholder{text-align:left;opacity:.75}
 
 
  .container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 20px;
+  padding: 12px;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 20px;
+  }
 }
 
 .header {
@@ -92,30 +104,97 @@ textarea[name$="Address[]"]::placeholder{text-align:left;opacity:.75}
 
 .card {
   background: white;
-  padding: 20px;
+  padding: 12px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+@media (min-width: 640px) {
+  .card {
+    padding: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    padding: 20px;
+  }
+}
+
 .section {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+@media (min-width: 640px) {
+  .section {
+    margin-bottom: 16px;
+    padding: 16px;
+  }
 }
 
 .section h2 {
-  font-size: 1.25rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+@media (min-width: 640px) {
+  .section h2 {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    padding-bottom: 5px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section h2 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
 }
 
 .section h3 {
-  font-size: 1.1rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+@media (min-width: 640px) {
+  .section h3 {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section h3 {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
 }
 
 .grid {
   display: grid;
-  gap: 16px;
+  gap: 4px;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    gap: 6px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    gap: 8px;
+  }
 }
 
 .cols-2 {
@@ -124,31 +203,110 @@ textarea[name$="Address[]"]::placeholder{text-align:left;opacity:.75}
 
 .person-grid {
   display: grid;
-  gap: 16px;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .person-grid {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .person-grid {
+    gap: 16px;
+  }
 }
 
 .row-1, .row-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .row-1, .row-2 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .row-1, .row-2 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .row-1, .row-2 {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .row-1, .row-2 {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .name-group {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+}
+
+.name-group select {
+  flex: 0 0 100px;
+}
+
+.name-group input[type="text"] {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 640px) {
+  .name-group {
+    gap: 8px;
+  }
+  
+  .name-group select {
+    flex: 0 0 120px;
+  }
 }
 
 .file-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
+@media (min-width: 640px) {
+  .file-row {
+    gap: 8px;
+  }
+}
+
 .avatar {
-  width: 64px;
-  height: 64px;
+  width: 36px;
+  height: 36px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid #e5e7eb;
+}
+
+@media (min-width: 640px) {
+  .avatar {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+  }
 }
 
 .preview-wrap {
@@ -181,9 +339,19 @@ textarea[name$="Address[]"]::placeholder{text-align:left;opacity:.75}
 }
 
 .btn {
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
 }
 
 .add-btn {
@@ -208,15 +376,73 @@ textarea[name$="Address[]"]::placeholder{text-align:left;opacity:.75}
   background: #6366f1;
 }
 
+label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-bottom: 2px;
+  color: #374151;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  label {
+    font-size: 0.75rem;
+    margin-bottom: 3px;
+  }
+}
+
 input, select, textarea {
   border: 1px solid #d1d5db;
   border-radius: 4px;
-  padding: 8px;
+  padding: 4px 8px;
   width: 100%;
+  font-size: 11px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  line-height: 1.4;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1);
 }
 
 textarea {
-  min-height: 80px;
+  min-height: 40px;
+  resize: vertical;
+}
+
+input::placeholder, textarea::placeholder {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  opacity: 0.7;
+}
+
+@media (min-width: 640px) {
+  input, select, textarea {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  textarea {
+    min-height: 50px;
+  }
+  
+  input::placeholder, textarea::placeholder {
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  input, select, textarea {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  
+  textarea {
+    min-height: 60px;
+  }
 }
 
 .rule-item, .cond-item {
@@ -224,6 +450,57 @@ textarea {
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.rule-item-table {
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.rule-item-table:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.rule-item-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.rule-item-table label {
+  flex: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.condition-item-table {
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.condition-item-table:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.condition-item-table button {
+  transition: all 0.2s ease;
+}
+
+.condition-item-table button:hover {
+  transform: scale(1.1);
 }
 
 .small {

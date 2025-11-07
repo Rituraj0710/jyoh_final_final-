@@ -9,7 +9,7 @@ const formSchema = new mongoose.Schema({
   formType: {
     type: String,
     required: true,
-    enum: ['sale-deed', 'will-deed', 'trust-deed', 'property-registration', 'power-of-attorney', 'adoption-deed'],
+    enum: ['sale-deed', 'will-deed', 'trust-deed', 'property-registration', 'power-of-attorney', 'adoption-deed', 'property-sale-certificate'],
     trim: true
   },
   data: {

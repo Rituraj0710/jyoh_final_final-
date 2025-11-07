@@ -374,13 +374,13 @@ const AdoptionDeedFormContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 w-full px-2 sm:px-4 lg:px-6 py-3">
+      <div className="w-full">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-3">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 sm:gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">दत्तक ग्रहण पत्र (Adoption Deed)</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">दत्तक ग्रहण पत्र (Adoption Deed)</h1>
               <p className="text-sm text-gray-600 mt-1">Complete adoption deed documentation with all required parties and legal formalities.</p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -405,25 +405,25 @@ const AdoptionDeedFormContent = () => {
         </div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {/* Registration Details Section */}
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+            <div className="bg-gray-50 rounded-lg p-2 sm:p-3 border border-gray-200">
+              <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 pb-1.5 border-b border-gray-200">
                 पंजीकरण विवरण
               </h2>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     देश <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="country"
                     value={formData.country}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     required
                   >
                     <option value="भारत">भारत</option>
@@ -431,14 +431,14 @@ const AdoptionDeedFormContent = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     राज्य <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="state"
                     value={formData.state}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   >
                     <option value="">-- चुनें --</option>
@@ -446,18 +446,18 @@ const AdoptionDeedFormContent = () => {
                       <option key={state} value={state}>{state}</option>
                     ))}
                   </select>
-                  {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
+                  {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     जिला <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="district"
                     value={formData.district}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                     disabled={!formData.state}
                   >
@@ -466,18 +466,18 @@ const AdoptionDeedFormContent = () => {
                       <option key={district} value={district}>{district}</option>
                     ))}
                   </select>
-                  {errors.district && <p className="text-red-500 text-sm mt-1">{errors.district}</p>}
+                  {errors.district && <p className="text-red-500 text-xs mt-1">{errors.district}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     तहसील <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="tehsil"
                     value={formData.tehsil}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                     disabled={!formData.district}
                   >
@@ -490,14 +490,14 @@ const AdoptionDeedFormContent = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     उप-निबंधक कार्यालय <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="subRegistrarOffice"
                     value={formData.subRegistrarOffice}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                     disabled={!formData.tehsil}
                   >
@@ -512,24 +512,24 @@ const AdoptionDeedFormContent = () => {
             </div>
 
             {/* Child Details Section */}
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b-2 border-blue-500 pb-2">
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+              <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-700 mb-2 sm:mb-3 border-b-2 border-blue-500 pb-1.5">
                 गोद लिए जाने वाले बच्चे का विवरण
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="md:col-span-2 lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
+                <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     फोटो अपलोड करें <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
                     <input
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleFileChange('childPhoto', e.target.files[0])}
-                      className="w-full md:flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full md:flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
-                    <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
                       {previewPhotos.childPhoto ? (
                         <img
                           src={previewPhotos.childPhoto}
@@ -543,7 +543,7 @@ const AdoptionDeedFormContent = () => {
                   </div>
                   
                   {/* Camera Capture Option */}
-                  <div className="mt-4">
+                  <div className="mt-2">
                     <CameraCapture
                       onCapture={(file, imageSrc) => handleCameraCapture('childPhoto', file, imageSrc)}
                       label="Capture Child Photo"
@@ -557,7 +557,7 @@ const AdoptionDeedFormContent = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     बच्चे का नाम <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -565,14 +565,14 @@ const AdoptionDeedFormContent = () => {
                     name="childName"
                     value={formData.childName}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
-                  {errors.childName && <p className="text-red-500 text-sm mt-1">{errors.childName}</p>}
+                  {errors.childName && <p className="text-red-500 text-xs mt-1">{errors.childName}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     जन्म तिथि <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -580,26 +580,26 @@ const AdoptionDeedFormContent = () => {
                     name="childDOB"
                     value={formData.childDOB}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
                   {formData.childDOB && (
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-xs text-gray-600 mt-1">
                       उम्र: {calculateAge(formData.childDOB)}
                     </p>
                   )}
-                  {errors.childDOB && <p className="text-red-500 text-sm mt-1">{errors.childDOB}</p>}
+                  {errors.childDOB && <p className="text-red-500 text-xs mt-1">{errors.childDOB}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     लिंग <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="childGender"
                     value={formData.childGender}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   >
                     <option value="">-- चुनें --</option>
@@ -607,18 +607,18 @@ const AdoptionDeedFormContent = () => {
                     <option value="महिला">महिला</option>
                     <option value="अन्य">अन्य</option>
                   </select>
-                  {errors.childGender && <p className="text-red-500 text-sm mt-1">{errors.childGender}</p>}
+                  {errors.childGender && <p className="text-red-500 text-xs mt-1">{errors.childGender}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     ब्लड ग्रुप <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="childBloodGroup"
                     value={formData.childBloodGroup}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   >
                     <option value="">-- चुनें --</option>
@@ -631,11 +631,11 @@ const AdoptionDeedFormContent = () => {
                     <option value="AB+">AB+</option>
                     <option value="AB-">AB-</option>
                   </select>
-                  {errors.childBloodGroup && <p className="text-red-500 text-sm mt-1">{errors.childBloodGroup}</p>}
+                  {errors.childBloodGroup && <p className="text-red-500 text-xs mt-1">{errors.childBloodGroup}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     शिक्षा का विवरण <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -644,14 +644,14 @@ const AdoptionDeedFormContent = () => {
                     value={formData.childEducation}
                     onChange={handleInputChange}
                     placeholder="जैसे: कक्षा 5, सरस्वती विद्या मंदिर"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
-                  {errors.childEducation && <p className="text-red-500 text-sm mt-1">{errors.childEducation}</p>}
+                  {errors.childEducation && <p className="text-red-500 text-xs mt-1">{errors.childEducation}</p>}
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     वर्तमान पता <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -660,14 +660,14 @@ const AdoptionDeedFormContent = () => {
                     value={formData.childCurrentAddress}
                     onChange={handleInputChange}
                     placeholder="पूरा पता"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
-                  {errors.childCurrentAddress && <p className="text-red-500 text-sm mt-1">{errors.childCurrentAddress}</p>}
+                  {errors.childCurrentAddress && <p className="text-red-500 text-xs mt-1">{errors.childCurrentAddress}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     जन्म प्रमाण पत्र नंबर <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -675,14 +675,14 @@ const AdoptionDeedFormContent = () => {
                     name="childBirthCertNo"
                     value={formData.childBirthCertNo}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
-                  {errors.childBirthCertNo && <p className="text-red-500 text-sm mt-1">{errors.childBirthCertNo}</p>}
+                  {errors.childBirthCertNo && <p className="text-red-500 text-xs mt-1">{errors.childBirthCertNo}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     जारी करने की तिथि <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -690,13 +690,13 @@ const AdoptionDeedFormContent = () => {
                     name="childBirthCertIssueDate"
                     value={formData.childBirthCertIssueDate}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     जारी करने का स्थान <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -705,47 +705,47 @@ const AdoptionDeedFormContent = () => {
                     value={formData.childBirthCertIssuePlace}
                     onChange={handleInputChange}
                     placeholder="जैसे: नगर निगम कार्यालय, लखनऊ"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
                 </div>
 
-                <div className="md:col-span-2 lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     जन्म प्रमाण पत्र अपलोड करें <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
                     onChange={(e) => handleFileChange('childBirthCert', e.target.files[0])}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
                 </div>
 
-                <div className="md:col-span-2 lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     पहचान पत्र अपलोड करें <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
                     onChange={(e) => handleFileChange('childID', e.target.files[0])}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
                 </div>
 
-                <div className="md:col-span-2 lg:col-span-3">
+                <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
                   <div className="flex items-center">
                     <input
                       type="checkbox"
                       name="isOrphanageAdoption"
                       checked={formData.isOrphanageAdoption}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
-                    <label className="ml-2 block text-sm text-gray-700">
+                    <label className="ml-2 block text-xs text-gray-700">
                       अनाथ आश्रम से दत्तक ग्रहण
                     </label>
                   </div>
@@ -754,7 +754,7 @@ const AdoptionDeedFormContent = () => {
                 {formData.isOrphanageAdoption && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         अनाथ आश्रम का नाम <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -762,14 +762,14 @@ const AdoptionDeedFormContent = () => {
                         name="orphanageName"
                         value={formData.orphanageName}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         required
                       />
-                      {errors.orphanageName && <p className="text-red-500 text-sm mt-1">{errors.orphanageName}</p>}
+                      {errors.orphanageName && <p className="text-red-500 text-xs mt-1">{errors.orphanageName}</p>}
                     </div>
 
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+                      <label className="block text-xs font-medium text-gray-700 mb-0.5">
                         अनाथ आश्रम का पता <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -777,10 +777,10 @@ const AdoptionDeedFormContent = () => {
                         name="orphanageAddress"
                         value={formData.orphanageAddress}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                         required
                       />
-                      {errors.orphanageAddress && <p className="text-red-500 text-sm mt-1">{errors.orphanageAddress}</p>}
+                      {errors.orphanageAddress && <p className="text-red-500 text-xs mt-1">{errors.orphanageAddress}</p>}
                     </div>
                   </>
                 )}
@@ -788,8 +788,8 @@ const AdoptionDeedFormContent = () => {
             </div>
 
             {/* Parties Section */}
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b-2 border-blue-500 pb-2">
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+              <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-700 mb-2 sm:mb-3 border-b-2 border-blue-500 pb-1.5">
                 पक्षकारों का विवरण (प्रथम पक्ष और द्वितीय पक्ष)
               </h2>
               
@@ -800,9 +800,9 @@ const AdoptionDeedFormContent = () => {
                     <h3 className="text-lg font-semibold text-gray-700 mb-4">
                       प्रथम पक्ष (दत्तक लेने वाला) #{index + 1}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="md:col-span-2 lg:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
+                      <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+                        <label className="block text-xs font-medium text-gray-700 mb-0.5">
                           फोटो अपलोड करें <span className="text-red-500">*</span>
                         </label>
                         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -812,7 +812,7 @@ const AdoptionDeedFormContent = () => {
                             onChange={(e) => handleFileChange(`firstPartyPhoto_${index}`, e.target.files[0])}
                             className="w-full md:flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
-                          <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
                             {previewPhotos[`firstPartyPhoto_${index}`] ? (
                               <img
                                 src={previewPhotos[`firstPartyPhoto_${index}`]}
@@ -845,7 +845,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={party.gender}
                           onChange={(e) => updateFirstParty(index, 'gender', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -861,7 +861,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={party.prefix}
                           onChange={(e) => updateFirstParty(index, 'prefix', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -879,7 +879,7 @@ const AdoptionDeedFormContent = () => {
                           type="text"
                           value={party.name}
                           onChange={(e) => updateFirstParty(index, 'name', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -892,7 +892,7 @@ const AdoptionDeedFormContent = () => {
                           type="date"
                           value={party.dob}
                           onChange={(e) => updateFirstParty(index, 'dob', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -904,7 +904,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={party.maritalStatus}
                           onChange={(e) => updateFirstParty(index, 'maritalStatus', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -916,8 +916,8 @@ const AdoptionDeedFormContent = () => {
                       </div>
 
                       {party.maritalStatus === 'विवाहित' && (
-                        <div className="md:col-span-2 lg:col-span-3">
-                          <div className="flex items-center">
+                      <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+                        <div className="flex items-center">
                             <input
                               type="checkbox"
                               checked={party.spouseConsent}
@@ -939,7 +939,7 @@ const AdoptionDeedFormContent = () => {
                           type="text"
                           value={party.sonOf}
                           onChange={(e) => updateFirstParty(index, 'sonOf', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -953,7 +953,7 @@ const AdoptionDeedFormContent = () => {
                           value={party.mobile}
                           onChange={(e) => updateFirstParty(index, 'mobile', e.target.value)}
                           pattern="[0-9]{10}"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -965,7 +965,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={party.occupation}
                           onChange={(e) => updateFirstParty(index, 'occupation', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -983,7 +983,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={party.idType}
                           onChange={(e) => updateFirstParty(index, 'idType', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -1002,7 +1002,7 @@ const AdoptionDeedFormContent = () => {
                           type="text"
                           value={party.idNo}
                           onChange={(e) => updateFirstParty(index, 'idNo', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1015,7 +1015,7 @@ const AdoptionDeedFormContent = () => {
                           value={party.address}
                           onChange={(e) => updateFirstParty(index, 'address', e.target.value)}
                           rows="3"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1037,9 +1037,9 @@ const AdoptionDeedFormContent = () => {
                     <h3 className="text-lg font-semibold text-gray-700 mb-4">
                       द्वितीय पक्ष (प्राकृतिक माता-पिता) #{index + 1}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="md:col-span-2 lg:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
+                      <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+                        <label className="block text-xs font-medium text-gray-700 mb-0.5">
                           फोटो अपलोड करें <span className="text-red-500">*</span>
                         </label>
                         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -1049,7 +1049,7 @@ const AdoptionDeedFormContent = () => {
                             onChange={(e) => handleFileChange(`secondPartyPhoto_${index}`, e.target.files[0])}
                             className="w-full md:flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
-                          <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
                             {previewPhotos[`secondPartyPhoto_${index}`] ? (
                               <img
                                 src={previewPhotos[`secondPartyPhoto_${index}`]}
@@ -1070,7 +1070,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={party.gender}
                           onChange={(e) => updateSecondParty(index, 'gender', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -1086,7 +1086,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={party.prefix}
                           onChange={(e) => updateSecondParty(index, 'prefix', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -1104,7 +1104,7 @@ const AdoptionDeedFormContent = () => {
                           type="text"
                           value={party.name}
                           onChange={(e) => updateSecondParty(index, 'name', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1117,7 +1117,7 @@ const AdoptionDeedFormContent = () => {
                           type="date"
                           value={party.dob}
                           onChange={(e) => updateSecondParty(index, 'dob', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1130,7 +1130,7 @@ const AdoptionDeedFormContent = () => {
                           type="text"
                           value={party.sonOf}
                           onChange={(e) => updateSecondParty(index, 'sonOf', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1144,7 +1144,7 @@ const AdoptionDeedFormContent = () => {
                           value={party.mobile}
                           onChange={(e) => updateSecondParty(index, 'mobile', e.target.value)}
                           pattern="[0-9]{10}"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1156,7 +1156,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={party.occupation}
                           onChange={(e) => updateSecondParty(index, 'occupation', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -1174,7 +1174,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={party.idType}
                           onChange={(e) => updateSecondParty(index, 'idType', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -1193,7 +1193,7 @@ const AdoptionDeedFormContent = () => {
                           type="text"
                           value={party.idNo}
                           onChange={(e) => updateSecondParty(index, 'idNo', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1206,7 +1206,7 @@ const AdoptionDeedFormContent = () => {
                           value={party.address}
                           onChange={(e) => updateSecondParty(index, 'address', e.target.value)}
                           rows="3"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1244,8 +1244,8 @@ const AdoptionDeedFormContent = () => {
             </div>
 
             {/* Witnesses Section */}
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b-2 border-blue-500 pb-2">
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+              <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-700 mb-2 sm:mb-3 border-b-2 border-blue-500 pb-1.5">
                 गवाह का विवरण
               </h2>
               
@@ -1255,9 +1255,9 @@ const AdoptionDeedFormContent = () => {
                     <h3 className="text-lg font-semibold text-gray-700 mb-4">
                       गवाह #{index + 1}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="md:col-span-2 lg:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
+                      <div className="md:col-span-3 lg:col-span-4 xl:col-span-5 2xl:col-span-6">
+                        <label className="block text-xs font-medium text-gray-700 mb-0.5">
                           फोटो अपलोड करें <span className="text-red-500">*</span>
                         </label>
                         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -1267,7 +1267,7 @@ const AdoptionDeedFormContent = () => {
                             onChange={(e) => handleFileChange(`witnessPhoto_${index}`, e.target.files[0])}
                             className="w-full md:flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
-                          <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-300 rounded flex items-center justify-center bg-gray-50 flex-shrink-0">
                             {previewPhotos[`witnessPhoto_${index}`] ? (
                               <img
                                 src={previewPhotos[`witnessPhoto_${index}`]}
@@ -1288,7 +1288,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={witness.gender}
                           onChange={(e) => updateWitness(index, 'gender', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -1304,7 +1304,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={witness.prefix}
                           onChange={(e) => updateWitness(index, 'prefix', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -1322,7 +1322,7 @@ const AdoptionDeedFormContent = () => {
                           type="text"
                           value={witness.name}
                           onChange={(e) => updateWitness(index, 'name', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1335,7 +1335,7 @@ const AdoptionDeedFormContent = () => {
                           type="text"
                           value={witness.sonOf}
                           onChange={(e) => updateWitness(index, 'sonOf', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1349,7 +1349,7 @@ const AdoptionDeedFormContent = () => {
                           value={witness.mobile}
                           onChange={(e) => updateWitness(index, 'mobile', e.target.value)}
                           pattern="[0-9]{10}"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1361,7 +1361,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={witness.occupation}
                           onChange={(e) => updateWitness(index, 'occupation', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -1379,7 +1379,7 @@ const AdoptionDeedFormContent = () => {
                         <select
                           value={witness.idType}
                           onChange={(e) => updateWitness(index, 'idType', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         >
                           <option value="">-- चुनें --</option>
@@ -1398,7 +1398,7 @@ const AdoptionDeedFormContent = () => {
                           type="text"
                           value={witness.idNo}
                           onChange={(e) => updateWitness(index, 'idNo', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1411,7 +1411,7 @@ const AdoptionDeedFormContent = () => {
                           value={witness.address}
                           onChange={(e) => updateWitness(index, 'address', e.target.value)}
                           rows="3"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -1438,8 +1438,8 @@ const AdoptionDeedFormContent = () => {
             </div>
 
             {/* Rules and Conditions Section */}
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b-2 border-blue-500 pb-2">
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+              <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-700 mb-2 sm:mb-3 border-b-2 border-blue-500 pb-1.5">
                 दत्तक ग्रहण के नियम और शर्तें
               </h2>
               
@@ -1480,14 +1480,14 @@ const AdoptionDeedFormContent = () => {
             </div>
 
             {/* Stamp and Gifts Section */}
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b-2 border-blue-500 pb-2">
+            <div className="bg-gray-50 p-2 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+              <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-700 mb-2 sm:mb-3 border-b-2 border-blue-500 pb-1.5">
                 स्टाम्प शुल्क और उपहार विवरण
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     स्टाम्प शुल्क राशि <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1495,14 +1495,14 @@ const AdoptionDeedFormContent = () => {
                     name="stampAmount"
                     value={formData.stampAmount}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
                   {errors.stampAmount && <p className="text-red-500 text-sm mt-1">{errors.stampAmount}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     स्टाम्प नंबर <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1510,14 +1510,14 @@ const AdoptionDeedFormContent = () => {
                     name="stampNo"
                     value={formData.stampNo}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
                   {errors.stampNo && <p className="text-red-500 text-sm mt-1">{errors.stampNo}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">
                     स्टाम्प तिथि <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1525,7 +1525,7 @@ const AdoptionDeedFormContent = () => {
                     name="stampDate"
                     value={formData.stampDate}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
                   {errors.stampDate && <p className="text-red-500 text-sm mt-1">{errors.stampDate}</p>}

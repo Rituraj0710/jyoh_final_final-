@@ -238,8 +238,15 @@ export const AuthProvider = ({ children }) => {
 
   // Get API headers with auth token
   const getAuthHeaders = () => {
+    // Try multiple token sources
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') || localStorage.getItem('authToken') : null);
+    
+    if (!authToken) {
+      console.warn('getAuthHeaders: No token found');
+    }
+    
     return {
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${authToken || ''}`,
       'Content-Type': 'application/json'
     };
   };

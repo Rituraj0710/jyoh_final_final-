@@ -14,7 +14,9 @@ const FormPreview = ({ formTitle, fields }) => {
       'sale-deed': '/api/sale-deed',
       'trust-deed': '/api/trust-deed',
       'property-registration': '/api/property-registration',
-      'property-sale-certificate': '/api/property-sale-certificate'
+      'property-sale-certificate': '/api/property-sale-certificate',
+      'power-of-attorney': '/api/power-of-attorney',
+      'adoption-deed': '/api/adoption-deed'
     };
 
     const endpoint = endpoints[formType] || '/api/form';

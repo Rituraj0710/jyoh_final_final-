@@ -85,7 +85,15 @@ export default function UserSignupPage() {
         }),
       });
 
-      const data = await response.json();
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        const text = await response.text();
+        console.error('Expected JSON but received:', text);
+        setError('Server returned an unexpected response. Check backend or network (see console).');
+        return;
+      }
 
         if (response.ok) {
           setSuccess(true);

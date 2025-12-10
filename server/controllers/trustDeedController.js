@@ -57,8 +57,8 @@ class TrustDeedController {
             mobile: sanitizedData[`trusteeMobile_${trusteeIndex}`],
             idType: sanitizedData[`trusteeIdType_${trusteeIndex}`] || 'आधार कार्ड',
             idNumber: sanitizedData[`trusteeIdNumber_${trusteeIndex}`],
-            idCard: req.files?.[`trusteeIdCard_${trusteeIndex}`]?.[0]?.filename || null,
-            photo: req.files?.[`trusteePhoto_${trusteeIndex}`]?.[0]?.filename || null
+            idCard: null, // Will be set after Cloudinary upload
+            photo: null // Will be set after Cloudinary upload
           };
           parsedTrustees.push(trustee);
           trusteeIndex++;
@@ -123,8 +123,8 @@ class TrustDeedController {
             mobile: sanitizedData[`witnessMobile_${witnessIndex}`],
             idType: sanitizedData[`witnessIdType_${witnessIndex}`] || 'आधार कार्ड',
             idNumber: sanitizedData[`witnessIdNumber_${witnessIndex}`],
-            idCard: req.files?.[`witnessIdCard_${witnessIndex}`]?.[0]?.filename || null,
-            photo: req.files?.[`witnessPhoto_${witnessIndex}`]?.[0]?.filename || null
+            idCard: null, // Will be set after Cloudinary upload
+            photo: null // Will be set after Cloudinary upload
           };
           parsedWitnesses.push(witness);
           witnessIndex++;
@@ -186,6 +186,41 @@ class TrustDeedController {
             success: false,
             message: "Each trustee must have name, address, and mobile number"
           });
+        }
+      }
+
+      // Process file uploads to Cloudinary
+      const { findAndProcessFile } = await import('../utils/fileUploadHelper.js');
+      
+      // Process trustee files
+      for (let i = 0; i < parsedTrustees.length; i++) {
+        const trusteeIndex = i + 1;
+        const idCardFile = req.files?.[`trusteeIdCard_${trusteeIndex}`]?.[0];
+        const photoFile = req.files?.[`trusteePhoto_${trusteeIndex}`]?.[0];
+        
+        if (idCardFile) {
+          const processed = await findAndProcessFile([idCardFile], `trusteeIdCard_${trusteeIndex}`, 'trust-deeds/trustees');
+          if (processed) parsedTrustees[i].idCard = processed.cloudinaryUrl;
+        }
+        if (photoFile) {
+          const processed = await findAndProcessFile([photoFile], `trusteePhoto_${trusteeIndex}`, 'trust-deeds/trustees');
+          if (processed) parsedTrustees[i].photo = processed.cloudinaryUrl;
+        }
+      }
+      
+      // Process witness files
+      for (let i = 0; i < parsedWitnesses.length; i++) {
+        const witnessIndex = i + 1;
+        const idCardFile = req.files?.[`witnessIdCard_${witnessIndex}`]?.[0];
+        const photoFile = req.files?.[`witnessPhoto_${witnessIndex}`]?.[0];
+        
+        if (idCardFile) {
+          const processed = await findAndProcessFile([idCardFile], `witnessIdCard_${witnessIndex}`, 'trust-deeds/witnesses');
+          if (processed) parsedWitnesses[i].idCard = processed.cloudinaryUrl;
+        }
+        if (photoFile) {
+          const processed = await findAndProcessFile([photoFile], `witnessPhoto_${witnessIndex}`, 'trust-deeds/witnesses');
+          if (processed) parsedWitnesses[i].photo = processed.cloudinaryUrl;
         }
       }
 

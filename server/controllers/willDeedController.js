@@ -193,14 +193,33 @@ class WillDeedController {
         createdBy: req.user?._id || null
       };
 
-      // Handle file uploads
+      // Handle file uploads to Cloudinary
+      const { findAndProcessFile, processMultipleFiles } = await import('../utils/fileUploadHelper.js');
       const uploads = { testatorId: '', testatorPhoto: '', personIds: [], personPhotos: [] };
-      (req.files || []).forEach((f) => {
-        if (f.fieldname === 'testator_id') uploads.testatorId = f.path;
-        else if (f.fieldname === 'testator_photo') uploads.testatorPhoto = f.path;
-        else if (f.fieldname.startsWith('person_id_')) uploads.personIds.push(f.path);
-        else if (f.fieldname.startsWith('person_photo_')) uploads.personPhotos.push(f.path);
-      });
+      
+      if (req.files && req.files.length > 0) {
+        const testatorIdFile = req.files.find(f => f.fieldname === 'testator_id');
+        const testatorPhotoFile = req.files.find(f => f.fieldname === 'testator_photo');
+        const personIdFiles = req.files.filter(f => f.fieldname.startsWith('person_id_'));
+        const personPhotoFiles = req.files.filter(f => f.fieldname.startsWith('person_photo_'));
+        
+        if (testatorIdFile) {
+          const processed = await findAndProcessFile([testatorIdFile], 'testator_id', 'will-deeds/testator');
+          if (processed) uploads.testatorId = processed.cloudinaryUrl;
+        }
+        if (testatorPhotoFile) {
+          const processed = await findAndProcessFile([testatorPhotoFile], 'testator_photo', 'will-deeds/testator');
+          if (processed) uploads.testatorPhoto = processed.cloudinaryUrl;
+        }
+        if (personIdFiles.length > 0) {
+          const processed = await processMultipleFiles(personIdFiles, 'will-deeds/persons');
+          uploads.personIds = processed.map(f => f.cloudinaryUrl);
+        }
+        if (personPhotoFiles.length > 0) {
+          const processed = await processMultipleFiles(personPhotoFiles, 'will-deeds/persons');
+          uploads.personPhotos = processed.map(f => f.cloudinaryUrl);
+        }
+      }
       willDeedData.uploads = uploads;
 
       const willDeed = new WillDeed(willDeedData);

@@ -6,7 +6,6 @@ import WillDeedController from "../controllers/willDeedController.js";
 import { syncToFormsData } from "../middlewares/formSyncMiddleware.js";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 
 const router = express.Router();
 
@@ -25,18 +24,8 @@ router.use((req, res, next) => {
 router.use(accessTokenAutoRefresh);
 router.use(setAuthHeader);
 
-// Multer setup for will deed uploads
-const uploadsDir = path.join(process.cwd(), 'uploads', 'will-deeds');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname || '') || '';
-    cb(null, `${unique}${ext}`);
-  }
-});
+// Multer setup for will deed uploads - using memory storage for Cloudinary
+const storage = multer.memoryStorage();
 
 const upload = multer({ 
   storage, 

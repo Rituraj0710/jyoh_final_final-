@@ -22,6 +22,23 @@ class SupportTicketController {
       // Generate unique ticket number
       const ticketNumber = await SupportTicket.generateTicketNumber();
 
+      // Process uploaded files to Cloudinary
+      const { processMultipleFiles } = await import('../utils/fileUploadHelper.js');
+      let processedAttachments = [];
+      
+      if (req.files && req.files.length > 0) {
+        processedAttachments = await processMultipleFiles(req.files, 'support-tickets');
+        processedAttachments = processedAttachments.map(file => ({
+          filename: file.filename,
+          url: file.cloudinaryUrl,
+          size: file.size,
+          contentType: file.contentType,
+          publicId: file.publicId
+        }));
+      } else if (attachments && Array.isArray(attachments)) {
+        processedAttachments = attachments;
+      }
+
       const ticketData = {
         ticketNumber,
         userId,
@@ -29,7 +46,7 @@ class SupportTicketController {
         priority: priority || 'medium',
         subject,
         description,
-        attachments: attachments || [],
+        attachments: processedAttachments,
         status: 'open'
       };
 

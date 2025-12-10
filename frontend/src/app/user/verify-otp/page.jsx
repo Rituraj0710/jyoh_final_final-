@@ -77,7 +77,16 @@ export default function VerifyOTPPage() {
         }),
       });
 
-      const data = await response.json();
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        // Received non-JSON (probably an HTML error page). Log and show a helpful message.
+        const text = await response.text();
+        console.error('Expected JSON but received:', text);
+        setError('Server returned an unexpected response. Check the backend or network (see console for details).');
+        return;
+      }
 
       if (response.ok) {
         setSuccessMessage("Email verified successfully! Redirecting to login...");
@@ -119,7 +128,15 @@ export default function VerifyOTPPage() {
         }),
       });
 
-      const data = await response.json();
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        const text = await response.text();
+        console.error('Expected JSON but received:', text);
+        setError('Server returned an unexpected response. Check the backend or network (see console for details).');
+        return;
+      }
 
       if (response.ok) {
         setSuccessMessage("OTP has been resent to your email");

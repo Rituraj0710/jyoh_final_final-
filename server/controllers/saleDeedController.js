@@ -1,6 +1,7 @@
 import SaleDeed from "../models/SaleDeed.js";
 import logger from "../config/logger.js";
 import DOMPurify from 'isomorphic-dompurify';
+import { uploadFile } from "../utils/cloudinaryUpload.js";
 
 // Input sanitization function
 const sanitizeInput = (input) => {
@@ -26,14 +27,29 @@ class SaleDeedController {
       // Sanitize all input data
       const sanitizedData = sanitizeInput(req.body);
       
-      // Parse arrays from FormData format if needed
-      let sellers = sanitizedData.sellers || [];
-      let buyers = sanitizedData.buyers || [];
-      let witnesses = sanitizedData.witnesses || [];
+      // Helper function to parse array from JSON string or array
+      const parseArray = (value, defaultValue = []) => {
+        if (Array.isArray(value)) {
+          return value;
+        }
+        if (typeof value === 'string') {
+          try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : defaultValue;
+          } catch (e) {
+            return defaultValue;
+          }
+        }
+        return defaultValue;
+      };
       
-      // If sellers is not an array, parse from FormData format
-      if (!Array.isArray(sellers) || sellers.length === 0) {
-        sellers = [];
+      // Parse arrays from JSON string, FormData format, or direct array
+      let sellers = parseArray(sanitizedData.sellers, []);
+      let buyers = parseArray(sanitizedData.buyers, []);
+      let witnesses = parseArray(sanitizedData.witnesses, []);
+      
+      // If sellers is still empty, try to parse from FormData format
+      if (sellers.length === 0) {
         let sellerIndex = 1;
         while (sanitizedData[`sellers_${sellerIndex}_name`]) {
           const seller = {
@@ -49,9 +65,8 @@ class SaleDeedController {
         }
       }
       
-      // If buyers is not an array, parse from FormData format
-      if (!Array.isArray(buyers) || buyers.length === 0) {
-        buyers = [];
+      // If buyers is still empty, try to parse from FormData format
+      if (buyers.length === 0) {
         let buyerIndex = 1;
         while (sanitizedData[`buyers_${buyerIndex}_name`]) {
           const buyer = {
@@ -67,9 +82,8 @@ class SaleDeedController {
         }
       }
       
-      // If witnesses is not an array, parse from FormData format
-      if (!Array.isArray(witnesses) || witnesses.length === 0) {
-        witnesses = [];
+      // If witnesses is still empty, try to parse from FormData format
+      if (witnesses.length === 0) {
         let witnessIndex = 1;
         while (sanitizedData[`witnesses_${witnessIndex}_name`]) {
           const witness = {
@@ -81,6 +95,152 @@ class SaleDeedController {
           witnesses.push(witness);
           witnessIndex++;
         }
+      }
+      
+      // Parse other arrays as well
+      const rooms = parseArray(sanitizedData.rooms, []);
+      const trees = parseArray(sanitizedData.trees, []);
+
+      // Initialize property photos arrays
+      let propertyPhotos = [];
+      let livePhotos = [];
+
+      // Process file uploads and attach to sellers, buyers, and witnesses
+      // Note: Files can come from file upload OR camera capture - both create File objects
+      // Camera-captured photos are JPEG images and are handled the same way as regular uploads
+      if (req.files && req.files.length > 0) {
+        logger.info('Processing file uploads for sale deed', {
+          fileCount: req.files.length,
+          userId: req.user?.id
+        });
+
+        // Helper function to upload file to Cloudinary and create file object
+        const createFileObject = async (file, folder = 'sale-deeds') => {
+          if (!file) return null;
+          try {
+            // Upload to Cloudinary
+            const cloudinaryResult = await uploadFile(file, folder);
+            
+            return {
+              filename: cloudinaryResult.filename,
+              contentType: cloudinaryResult.contentType,
+              size: cloudinaryResult.size,
+              path: cloudinaryResult.cloudinaryUrl, // Cloudinary URL instead of local path
+              publicId: cloudinaryResult.publicId, // Store public_id for future deletion
+              cloudinaryUrl: cloudinaryResult.cloudinaryUrl
+            };
+          } catch (error) {
+            logger.error('Error uploading file to Cloudinary', {
+              error: error.message,
+              filename: file?.originalname
+            });
+            return null;
+          }
+        };
+
+        // Process files and attach to sellers (with async Cloudinary uploads)
+        const sellerPromises = sellers.map(async (seller, index) => {
+          const filePrefix = `seller_${index}_`;
+          const panCardFile = req.files.find(f => f.fieldname === `${filePrefix}panCard`);
+          const photoFile = req.files.find(f => f.fieldname === `${filePrefix}photo`);
+          const idFile = req.files.find(f => f.fieldname === `${filePrefix}id`);
+          const signatureFile = req.files.find(f => f.fieldname === `${filePrefix}signature`);
+
+          const baseFolder = process.env.CLOUDINARY_ASSET_FOLDER || 'Cloudinary_joyh';
+          const [panCard, photo, id, signature] = await Promise.all([
+            createFileObject(panCardFile, `${baseFolder}/sellers`),
+            createFileObject(photoFile, `${baseFolder}/sellers`),
+            createFileObject(idFile, `${baseFolder}/sellers`),
+            createFileObject(signatureFile, `${baseFolder}/sellers`)
+          ]);
+
+          return {
+            ...seller,
+            panCard,
+            photo, // Can be from file upload or camera capture
+            id,
+            signature
+          };
+        });
+        sellers = await Promise.all(sellerPromises);
+
+        // Process files and attach to buyers (with async Cloudinary uploads)
+        const buyerPromises = buyers.map(async (buyer, index) => {
+          const filePrefix = `buyer_${index}_`;
+          const panCardFile = req.files.find(f => f.fieldname === `${filePrefix}panCard`);
+          const photoFile = req.files.find(f => f.fieldname === `${filePrefix}photo`);
+          const idFile = req.files.find(f => f.fieldname === `${filePrefix}id`);
+          const signatureFile = req.files.find(f => f.fieldname === `${filePrefix}signature`);
+
+          const baseFolder = process.env.CLOUDINARY_ASSET_FOLDER || 'Cloudinary_joyh';
+          const [panCard, photo, id, signature] = await Promise.all([
+            createFileObject(panCardFile, `${baseFolder}/buyers`),
+            createFileObject(photoFile, `${baseFolder}/buyers`),
+            createFileObject(idFile, `${baseFolder}/buyers`),
+            createFileObject(signatureFile, `${baseFolder}/buyers`)
+          ]);
+
+          return {
+            ...buyer,
+            panCard,
+            photo, // Can be from file upload or camera capture
+            id,
+            signature
+          };
+        });
+        buyers = await Promise.all(buyerPromises);
+
+        // Process files and attach to witnesses (with async Cloudinary uploads)
+        const witnessPromises = witnesses.map(async (witness, index) => {
+          const filePrefix = `witness_${index}_`;
+          const panCardFile = req.files.find(f => f.fieldname === `${filePrefix}panCard`);
+          const photoFile = req.files.find(f => f.fieldname === `${filePrefix}photo`);
+          const idFile = req.files.find(f => f.fieldname === `${filePrefix}id`);
+          const signatureFile = req.files.find(f => f.fieldname === `${filePrefix}signature`);
+
+          const baseFolder = process.env.CLOUDINARY_ASSET_FOLDER || 'Cloudinary_joyh';
+          const [panCard, photo, id, signature] = await Promise.all([
+            createFileObject(panCardFile, `${baseFolder}/witnesses`),
+            createFileObject(photoFile, `${baseFolder}/witnesses`),
+            createFileObject(idFile, `${baseFolder}/witnesses`),
+            createFileObject(signatureFile, `${baseFolder}/witnesses`)
+          ]);
+
+          return {
+            ...witness,
+            panCard,
+            photo, // Can be from file upload or camera capture
+            id,
+            signature
+          };
+        });
+        witnesses = await Promise.all(witnessPromises);
+
+        // Process property photos
+        const baseFolder = process.env.CLOUDINARY_ASSET_FOLDER || 'Cloudinary_joyh';
+        const propertyPhotoFiles = req.files.filter(f => f.fieldname.startsWith('propertyPhoto_'));
+        const propertyPhotoPromises = propertyPhotoFiles.map(file => 
+          createFileObject(file, `${baseFolder}/property-photos`)
+        );
+        propertyPhotos = await Promise.all(propertyPhotoPromises);
+        propertyPhotos = propertyPhotos.filter(photo => photo !== null);
+        
+        // Process live photos
+        const livePhotoFiles = req.files.filter(f => f.fieldname.startsWith('livePhoto_'));
+        const livePhotoPromises = livePhotoFiles.map(file => 
+          createFileObject(file, `${baseFolder}/live-photos`)
+        );
+        livePhotos = await Promise.all(livePhotoPromises);
+        livePhotos = livePhotos.filter(photo => photo !== null);
+
+        logger.info('File uploads processed successfully', {
+          sellersCount: sellers.length,
+          buyersCount: buyers.length,
+          witnessesCount: witnesses.length,
+          propertyPhotosCount: propertyPhotos.length,
+          livePhotosCount: livePhotos.length,
+          userId: req.user?.id
+        });
       }
       
       const {
@@ -123,14 +283,22 @@ class SaleDeedController {
         coveredAreaMulti,
         nalkoopCount,
         borewellCount,
-        rooms = [],
-        trees = [],
         shops = [],
         mallFloors = [],
         facilities = [],
         dynamicFacilities = [],
         calculations = {}
       } = sanitizedData;
+      
+      // Parse calculations if it's a JSON string
+      let parsedCalculations = calculations;
+      if (typeof calculations === 'string') {
+        try {
+          parsedCalculations = JSON.parse(calculations);
+        } catch (e) {
+          parsedCalculations = {};
+        }
+      }
 
       // Validation
       if (!documentType || !propertyType || !salePrice || !circleRateAmount) {
@@ -223,7 +391,9 @@ class SaleDeedController {
         mallFloors,
         facilities,
         dynamicFacilities,
-        calculations,
+        calculations: parsedCalculations,
+        propertyPhotos: propertyPhotos.length > 0 ? propertyPhotos : undefined,
+        livePhotos: livePhotos.length > 0 ? livePhotos : undefined,
         createdBy: req.user?.id || null,
         status: 'submitted',
         meta: {

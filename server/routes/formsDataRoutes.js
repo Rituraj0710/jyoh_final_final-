@@ -2,7 +2,6 @@ import express from 'express';
 import passport from 'passport';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 import FormsDataController from '../controllers/formsDataController.js';
 import accessTokenAutoRefresh from '../middlewares/accessTokenAutoRefresh.js';
 import setAuthHeader from '../middlewares/setAuthHeader.js';
@@ -19,19 +18,8 @@ import {
 } from '../middlewares/formsRbac.js';
 import { authLimiter } from '../config/rateLimits.js';
 
-// Create upload directory for forms data
-const uploadRoot = path.join(process.cwd(), 'uploads', 'forms-data');
-fs.mkdirSync(uploadRoot, { recursive: true });
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadRoot),
-  filename: (req, file, cb) => {
-    const ts = Date.now();
-    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    cb(null, `${ts}_${safe}`);
-  }
-});
+// Configure multer for file uploads - using memory storage for Cloudinary
+const storage = multer.memoryStorage();
 
 const upload = multer({ 
   storage,

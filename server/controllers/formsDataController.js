@@ -51,15 +51,19 @@ class FormsDataController {
       // Clean fields (convert empty strings to null)
       const cleanedFields = FormsDataController.cleanFields(fields);
 
-      // Process uploaded files if any
-      const uploadedFiles = req.files ? Object.values(req.files).flat().map(file => ({
-        fieldName: file.fieldname,
-        fileName: file.originalname,
-        filePath: file.path,
+      // Process uploaded files to Cloudinary if any
+      const { processMultipleFiles } = await import('../utils/fileUploadHelper.js');
+      const processedFiles = req.files ? await processMultipleFiles(Object.values(req.files).flat(), 'forms-data') : [];
+      const uploadedFiles = processedFiles.map(file => ({
+        fieldName: file.fieldname || 'unknown',
+        fileName: file.filename,
+        filePath: file.cloudinaryUrl,
         fileSize: file.size,
-        mimeType: file.mimetype,
-        uploadedAt: new Date()
-      })) : [];
+        mimeType: file.contentType,
+        uploadedAt: new Date(),
+        publicId: file.publicId,
+        cloudinaryUrl: file.cloudinaryUrl
+      }));
 
       // Check if form already exists
       let formData = await FormsData.findOne({ 
@@ -155,15 +159,19 @@ class FormsDataController {
       // Clean fields (convert empty strings to null)
       const cleanedFields = FormsDataController.cleanFields(fields);
 
-      // Process uploaded files if any
-      const uploadedFiles = req.files ? Object.values(req.files).flat().map(file => ({
-        fieldName: file.fieldname,
-        fileName: file.originalname,
-        filePath: file.path,
+      // Process uploaded files to Cloudinary if any
+      const { processMultipleFiles } = await import('../utils/fileUploadHelper.js');
+      const processedFiles = req.files ? await processMultipleFiles(Object.values(req.files).flat(), 'forms-data') : [];
+      const uploadedFiles = processedFiles.map(file => ({
+        fieldName: file.fieldname || 'unknown',
+        fileName: file.filename,
+        filePath: file.cloudinaryUrl,
         fileSize: file.size,
-        mimeType: file.mimetype,
-        uploadedAt: new Date()
-      })) : [];
+        mimeType: file.contentType,
+        uploadedAt: new Date(),
+        publicId: file.publicId,
+        cloudinaryUrl: file.cloudinaryUrl
+      }));
 
       // Find existing form or create new one
       let formData = await FormsData.findOne({ 

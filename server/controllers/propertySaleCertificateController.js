@@ -138,32 +138,9 @@ class PropertySaleCertificateController {
         });
       }
 
-      // Handle file uploads
-      const files = [];
-      if (req.files) {
-        Object.keys(req.files).forEach(fieldName => {
-          const file = req.files[fieldName];
-          if (Array.isArray(file)) {
-            file.forEach(f => {
-              files.push({
-                field: fieldName,
-                filename: f.filename,
-                contentType: f.mimetype,
-                size: f.size,
-                path: f.path
-              });
-            });
-          } else {
-            files.push({
-              field: fieldName,
-              filename: file.filename,
-              contentType: file.mimetype,
-              size: file.size,
-              path: file.path
-            });
-          }
-        });
-      }
+      // Handle file uploads to Cloudinary
+      const { processFilesByFields } = await import('../utils/fileUploadHelper.js');
+      const files = await processFilesByFields(req.files, 'property-sale-certificates');
 
       // Create property sale certificate
       const propertySaleCertificateData = {

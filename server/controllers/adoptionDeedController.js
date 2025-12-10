@@ -174,39 +174,48 @@ class AdoptionDeedController {
         createdBy: req.user?.id || null
       };
 
-      // Handle file uploads
+      // Handle file uploads to Cloudinary
+      const { processFilesByFields, findAndProcessFile } = await import('../utils/fileUploadHelper.js');
+      
       if (req.files) {
-        const fileFields = ['childPhoto', 'childBirthCert', 'childID'];
+        // Process child documents
+        const childPhoto = await findAndProcessFile(req.files.childPhoto, 'childPhoto', 'adoption-deeds/child');
+        const childBirthCert = await findAndProcessFile(req.files.childBirthCert, 'childBirthCert', 'adoption-deeds/child');
+        const childID = await findAndProcessFile(req.files.childID, 'childID', 'adoption-deeds/child');
         
-        fileFields.forEach(field => {
-          if (req.files[field]) {
-            adoptionDeedData[field] = req.files[field][0].filename;
-          }
-        });
+        if (childPhoto) adoptionDeedData.childPhoto = childPhoto.cloudinaryUrl;
+        if (childBirthCert) adoptionDeedData.childBirthCert = childBirthCert.cloudinaryUrl;
+        if (childID) adoptionDeedData.childID = childID.cloudinaryUrl;
 
         // Handle party photos
         if (req.files.firstPartyPhoto) {
-          req.files.firstPartyPhoto.forEach((file, index) => {
-            if (adoptionDeedData.firstParties[index]) {
-              adoptionDeedData.firstParties[index].photo = file.filename;
+          for (let index = 0; index < req.files.firstPartyPhoto.length; index++) {
+            const file = req.files.firstPartyPhoto[index];
+            const processed = await findAndProcessFile([file], file.fieldname, 'adoption-deeds/first-party');
+            if (processed && adoptionDeedData.firstParties[index]) {
+              adoptionDeedData.firstParties[index].photo = processed.cloudinaryUrl;
             }
-          });
+          }
         }
 
         if (req.files.secondPartyPhoto) {
-          req.files.secondPartyPhoto.forEach((file, index) => {
-            if (adoptionDeedData.secondParties[index]) {
-              adoptionDeedData.secondParties[index].photo = file.filename;
+          for (let index = 0; index < req.files.secondPartyPhoto.length; index++) {
+            const file = req.files.secondPartyPhoto[index];
+            const processed = await findAndProcessFile([file], file.fieldname, 'adoption-deeds/second-party');
+            if (processed && adoptionDeedData.secondParties[index]) {
+              adoptionDeedData.secondParties[index].photo = processed.cloudinaryUrl;
             }
-          });
+          }
         }
 
         if (req.files.witnessPhoto) {
-          req.files.witnessPhoto.forEach((file, index) => {
-            if (adoptionDeedData.witnesses[index]) {
-              adoptionDeedData.witnesses[index].photo = file.filename;
+          for (let index = 0; index < req.files.witnessPhoto.length; index++) {
+            const file = req.files.witnessPhoto[index];
+            const processed = await findAndProcessFile([file], file.fieldname, 'adoption-deeds/witnesses');
+            if (processed && adoptionDeedData.witnesses[index]) {
+              adoptionDeedData.witnesses[index].photo = processed.cloudinaryUrl;
             }
-          });
+          }
         }
       }
 

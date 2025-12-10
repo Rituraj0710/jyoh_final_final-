@@ -129,31 +129,122 @@ export const FormWorkflowProvider = ({ children, formType }) => {
         // Convert to FormData for multipart submission
         body = new FormData();
         
-        // Add all form fields
-        Object.keys(data).forEach(key => {
-          if (key !== 'files' && key !== 'calculations' && key !== 'amount' && key !== 'formType') {
-            if (typeof data[key] === 'object' && !Array.isArray(data[key])) {
-              // Nested objects
-              Object.keys(data[key]).forEach(nestedKey => {
-                body.append(`${key}_${nestedKey}`, data[key][nestedKey]);
-              });
-            } else if (Array.isArray(data[key])) {
-              // Arrays
-              if (key === 'sellers' || key === 'buyers' || key === 'witnesses') {
-                data[key].forEach((item, index) => {
-                  Object.keys(item).forEach(itemKey => {
-                    body.append(`${key}_${index + 1}_${itemKey}`, item[itemKey]);
+        // Prepare data for JSON serialization (remove File objects temporarily)
+        const dataForJson = { ...data };
+        const filesToAppend = [];
+        
+        // Extract files from sellers, buyers, witnesses and prepare for separate append
+        ['sellers', 'buyers', 'witnesses'].forEach(key => {
+          if (Array.isArray(data[key])) {
+            data[key] = data[key].map((item, index) => {
+              const cleanedItem = { ...item };
+              const typePrefix = key.substring(0, key.length - 1); // seller, buyer, witness
+              
+              // Extract file fields
+              ['panCard', 'photo', 'id', 'signature'].forEach(fileKey => {
+                if (item[fileKey] instanceof File) {
+                  filesToAppend.push({
+                    fieldname: `${typePrefix}_${index}_${fileKey}`,
+                    file: item[fileKey]
                   });
-                });
+                  cleanedItem[fileKey] = null; // Remove File object from JSON data
+                }
+              });
+              
+              return cleanedItem;
+            });
+          }
+        });
+
+        // Extract property photos
+        if (Array.isArray(data.propertyPhotos)) {
+          data.propertyPhotos.forEach((photo, index) => {
+            // photo can be a File object directly or an object with a file property
+            if (photo instanceof File) {
+              filesToAppend.push({
+                fieldname: `propertyPhoto_${index}`,
+                file: photo
+              });
+            } else if (photo && photo.file instanceof File) {
+              filesToAppend.push({
+                fieldname: `propertyPhoto_${index}`,
+                file: photo.file
+              });
+            }
+          });
+          // Remove File objects from JSON data
+          data.propertyPhotos = data.propertyPhotos.map(photo => {
+            if (photo instanceof File) {
+              return null;
+            }
+            return {
+              ...photo,
+              file: null
+            };
+          }).filter(p => p !== null);
+        }
+
+        // Extract live photos
+        if (Array.isArray(data.livePhotos)) {
+          data.livePhotos.forEach((photo, index) => {
+            // photo can be a File object directly or an object with a file property
+            if (photo instanceof File) {
+              filesToAppend.push({
+                fieldname: `livePhoto_${index}`,
+                file: photo
+              });
+            } else if (photo && photo.file instanceof File) {
+              filesToAppend.push({
+                fieldname: `livePhoto_${index}`,
+                file: photo.file
+              });
+            }
+          });
+          // Remove File objects from JSON data
+          data.livePhotos = data.livePhotos.map(photo => {
+            if (photo instanceof File) {
+              return null;
+            }
+            return {
+              ...photo,
+              file: null
+            };
+          }).filter(p => p !== null);
+        }
+        
+        // Add all form fields (including arrays as JSON)
+        Object.keys(dataForJson).forEach(key => {
+          if (key !== 'files' && key !== 'calculations' && key !== 'amount' && key !== 'formType') {
+            if (typeof dataForJson[key] === 'object' && !Array.isArray(dataForJson[key]) && dataForJson[key] !== null) {
+              // Nested objects
+              Object.keys(dataForJson[key]).forEach(nestedKey => {
+                body.append(`${key}_${nestedKey}`, dataForJson[key][nestedKey]);
+              });
+            } else if (Array.isArray(dataForJson[key])) {
+              // Arrays - send as JSON string for complex arrays, or flatten for simple arrays
+              if (key === 'sellers' || key === 'buyers' || key === 'witnesses' || key === 'rooms' || key === 'trees') {
+                // Send complex arrays as JSON string
+                body.append(key, JSON.stringify(dataForJson[key]));
               } else {
-                data[key].forEach((item, index) => {
+                // Simple arrays
+                dataForJson[key].forEach((item, index) => {
                   body.append(`${key}_${index + 1}`, item);
                 });
               }
-            } else {
-              body.append(key, data[key]);
+            } else if (dataForJson[key] !== null && dataForJson[key] !== undefined) {
+              body.append(key, dataForJson[key]);
             }
           }
+        });
+        
+        // Append calculations if present
+        if (dataForJson.calculations) {
+          body.append('calculations', JSON.stringify(dataForJson.calculations));
+        }
+        
+        // Append all files with correct field names
+        filesToAppend.forEach(({ fieldname, file }) => {
+          body.append(fieldname, file);
         });
       } else {
         // For other forms, use JSON
@@ -225,3 +316,4 @@ export const FormWorkflowProvider = ({ children, formType }) => {
     </FormWorkflowContext.Provider>
   );
 };
+

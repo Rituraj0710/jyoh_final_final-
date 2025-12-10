@@ -99,22 +99,9 @@ class PowerOfAttorneyController {
         });
       }
 
-      // Process file uploads
-      const files = [];
-      if (req.files) {
-        Object.keys(req.files).forEach(fieldName => {
-          const file = req.files[fieldName][0];
-          if (file) {
-            files.push({
-              field: fieldName,
-              filename: file.filename,
-              contentType: file.mimetype,
-              size: file.size,
-              path: file.path
-            });
-          }
-        });
-      }
+      // Process file uploads to Cloudinary
+      const { processFilesByFields } = await import('../utils/fileUploadHelper.js');
+      const files = await processFilesByFields(req.files, 'power-of-attorney');
 
       // Create power of attorney
       const powerOfAttorneyData = {

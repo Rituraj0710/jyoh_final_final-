@@ -1,13 +1,74 @@
 import mongoose from 'mongoose';
 
+/**
+ * Sale Deed Schema
+ * 
+ * File Upload Fields:
+ * - panCard: File upload only (image or PDF)
+ * - photo: File upload OR camera capture (JPEG image)
+ * - id: File upload only (image or PDF)
+ * - signature: File upload only (image)
+ * 
+ * Note: Camera-captured photos are JPEG images and are processed the same way as file uploads.
+ * The backend doesn't distinguish between camera-captured and uploaded files.
+ */
+
 const sellerSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   relation: { type: String, trim: true },
   address: { type: String, trim: true },
   mobile: { type: String, trim: true },
   idType: { type: String, trim: true },
-  idNo: { type: String, trim: true }
-}, { _id: true }); // Changed to true to match dummy data structure
+  idNo: { type: String, trim: true },
+  panCard: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  },
+  photo: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  },
+  id: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  },
+  signature: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  }
+}, { _id: true, strict: true }); // Changed to true to match dummy data structure
 
 const buyerSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
@@ -15,15 +76,111 @@ const buyerSchema = new mongoose.Schema({
   address: { type: String, trim: true },
   mobile: { type: String, trim: true },
   idType: { type: String, trim: true },
-  idNo: { type: String, trim: true }
-}, { _id: true }); // Changed to true to match dummy data structure
+  idNo: { type: String, trim: true },
+  panCard: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  },
+  photo: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  },
+  id: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  },
+  signature: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  }
+}, { _id: true, strict: true }); // Changed to true to match dummy data structure
 
 const witnessSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   relation: { type: String, trim: true },
   address: { type: String, trim: true },
-  mobile: { type: String, trim: true }
-}, { _id: true }); // Changed to true to match dummy data structure
+  mobile: { type: String, trim: true },
+  panCard: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  },
+  photo: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  },
+  id: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  },
+  signature: {
+    type: {
+      filename: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      path: { type: String, trim: true }, // Cloudinary URL
+      publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+      cloudinaryUrl: { type: String, trim: true } // Cloudinary secure URL
+    },
+    required: false,
+    _id: false
+  }
+}, { _id: true, strict: true }); // Changed to true to match dummy data structure
 
 const roomSchema = new mongoose.Schema({
   type: { type: String, trim: true },
@@ -118,7 +275,29 @@ const saleDeedSchema = new mongoose.Schema({
     plotType: { type: String, trim: true }
   },
 
-  // File Uploads
+  // Property Photos and Images
+  propertyPhotos: [{
+    filename: { type: String, trim: true },
+    contentType: { type: String, trim: true },
+    size: { type: Number, min: 0 },
+    path: { type: String, trim: true }, // Cloudinary URL
+    publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+    cloudinaryUrl: { type: String, trim: true }, // Cloudinary secure URL
+    uploadedAt: { type: Date, default: Date.now },
+    description: { type: String, trim: true } // Optional description for the photo
+  }],
+  livePhotos: [{
+    filename: { type: String, trim: true },
+    contentType: { type: String, trim: true },
+    size: { type: Number, min: 0 },
+    path: { type: String, trim: true }, // Cloudinary URL
+    publicId: { type: String, trim: true }, // Cloudinary public_id for deletion
+    cloudinaryUrl: { type: String, trim: true }, // Cloudinary secure URL
+    uploadedAt: { type: Date, default: Date.now },
+    description: { type: String, trim: true } // Optional description for live photo
+  }],
+
+  // File Uploads (for other documents)
   files: [{
     filename: { type: String, trim: true },
     contentType: { type: String, trim: true },

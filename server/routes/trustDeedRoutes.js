@@ -1,7 +1,6 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 import passport from "passport";
 import accessTokenAutoRefresh from "../middlewares/accessTokenAutoRefresh.js";
 import setAuthHeader from "../middlewares/setAuthHeader.js";
@@ -10,21 +9,8 @@ import { syncToFormsData } from "../middlewares/formSyncMiddleware.js";
 
 const router = express.Router();
 
-// Create upload directory for trust deeds
-const uploadRoot = path.join(process.cwd(), "uploads", "trustdeed");
-fs.mkdirSync(uploadRoot, { recursive: true });
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    cb(null, uploadRoot);
-  },
-  filename: function(req, file, cb) {
-    const ts = Date.now();
-    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    cb(null, `${ts}_${safe}`);
-  }
-});
+// Configure multer for file uploads - using memory storage for Cloudinary
+const storage = multer.memoryStorage();
 
 const upload = multer({ 
   storage,

@@ -4,23 +4,9 @@ import { authenticateToken } from '../middlewares/roleBasedAuth.js';
 import { authorizeRoles } from '../middlewares/authorizeRoles.js';
 import { authLimiter } from '../config/rateLimits.js';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = 'uploads/support-tickets';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `ticket-${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
-});
+// Configure multer for file uploads - using memory storage for Cloudinary
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,

@@ -15,4 +15,14 @@ export const store = configureStore({
 
 setupListeners(store.dispatch);
 
+// import { authApi } from "./services/auth";
+
+// export const store = configureStore({
+//   reducer: {
+//     [authApi.reducerPath]: authApi.reducer,
+//   },
+//   middleware: (getDefaultMiddleware) =>
+//     getDefaultMiddleware().concat(authApi.middleware),
+// });
+
 

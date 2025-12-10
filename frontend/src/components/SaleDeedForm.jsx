@@ -6,6 +6,7 @@ import FormWorkflow from './FormWorkflow/FormWorkflow';
 import LanguageSelectorDropdown from './LanguageSelectorDropdown';
 import ClientOnly from './ClientOnly';
 import { useTranslation } from 'react-i18next';
+import CameraCapture from './CameraCapture';
 
 // Constants
 const STAMP_DUTY_RATE = 0.07;
@@ -121,7 +122,11 @@ const SaleDeedFormContent = () => {
     address: '',
     mobile: '',
     idType: '',
-    idNo: ''
+    idNo: '',
+    panCard: null,
+    photo: null,
+    id: null,
+    signature: null
   }]);
 
   const [buyers, setBuyers] = useState([{
@@ -130,13 +135,24 @@ const SaleDeedFormContent = () => {
     address: '',
     mobile: '',
     idType: '',
-    idNo: ''
+    idNo: '',
+    panCard: null,
+    photo: null,
+    id: null,
+    signature: null
   }]);
 
   const [witnesses, setWitnesses] = useState([
-    { name: '', relation: '', address: '', mobile: '' },
-    { name: '', relation: '', address: '', mobile: '' }
+    { name: '', relation: '', address: '', mobile: '', panCard: null, photo: null, id: null, signature: null },
+    { name: '', relation: '', address: '', mobile: '', panCard: null, photo: null, id: null, signature: null }
   ]);
+
+  // Preview images state for file uploads
+  const [previewImages, setPreviewImages] = useState({});
+  
+  // Property photos state
+  const [propertyPhotos, setPropertyPhotos] = useState([]);
+  const [livePhotos, setLivePhotos] = useState([]);
 
   const [rooms, setRooms] = useState([]);
   const [trees, setTrees] = useState([]);
@@ -171,7 +187,11 @@ const SaleDeedFormContent = () => {
       address: '',
       mobile: '',
       idType: '',
-      idNo: ''
+      idNo: '',
+      panCard: null,
+      photo: null,
+      id: null,
+      signature: null
     }]);
   };
 
@@ -197,7 +217,11 @@ const SaleDeedFormContent = () => {
       address: '',
       mobile: '',
       idType: '',
-      idNo: ''
+      idNo: '',
+      panCard: null,
+      photo: null,
+      id: null,
+      signature: null
     }]);
   };
 
@@ -281,6 +305,118 @@ const SaleDeedFormContent = () => {
     });
   };
 
+  // File upload handlers for sellers, buyers, and witnesses
+  const handleFileChange = (type, index, field, file) => {
+    if (!file) return;
+
+    const previewKey = `${type}_${index}_${field}`;
+    let previewUrl = null;
+
+    if (file.type.startsWith('image/')) {
+      previewUrl = URL.createObjectURL(file);
+      setPreviewImages(prev => ({
+        ...prev,
+        [previewKey]: previewUrl
+      }));
+    }
+
+    if (type === 'seller') {
+      setSellers(prev => prev.map((item, i) =>
+        i === index ? { ...item, [field]: file } : item
+      ));
+    } else if (type === 'buyer') {
+      setBuyers(prev => prev.map((item, i) =>
+        i === index ? { ...item, [field]: file } : item
+      ));
+    } else if (type === 'witness') {
+      setWitnesses(prev => prev.map((item, i) =>
+        i === index ? { ...item, [field]: file } : item
+      ));
+    }
+  };
+
+  // Remove file preview and clear file
+  const handleRemoveFile = (type, index, field) => {
+    const previewKey = `${type}_${index}_${field}`;
+    if (previewImages[previewKey]) {
+      URL.revokeObjectURL(previewImages[previewKey]);
+      setPreviewImages(prev => {
+        const newPrev = { ...prev };
+        delete newPrev[previewKey];
+        return newPrev;
+      });
+    }
+
+    if (type === 'seller') {
+      setSellers(prev => prev.map((item, i) =>
+        i === index ? { ...item, [field]: null } : item
+      ));
+    } else if (type === 'buyer') {
+      setBuyers(prev => prev.map((item, i) =>
+        i === index ? { ...item, [field]: null } : item
+      ));
+    } else if (type === 'witness') {
+      setWitnesses(prev => prev.map((item, i) =>
+        i === index ? { ...item, [field]: null } : item
+      ));
+    }
+  };
+
+  // Handle camera capture
+  const handleCameraCapture = (type, index, field, file, imageSrc) => {
+    handleFileChange(type, index, field, file);
+    if (imageSrc) {
+      setPreviewImages(prev => ({
+        ...prev,
+        [`${type}_${index}_${field}`]: imageSrc
+      }));
+    }
+  };
+
+  // Handle property photo upload
+  const handlePropertyPhotoUpload = (file, isLivePhoto = false) => {
+    if (!file) return;
+    
+    const photoId = Date.now() + Math.random();
+    const previewUrl = URL.createObjectURL(file);
+    
+    const photoObj = {
+      id: photoId,
+      file,
+      preview: previewUrl,
+      name: file.name,
+      size: file.size,
+      type: file.type
+    };
+    
+    if (isLivePhoto) {
+      setLivePhotos(prev => [...prev, photoObj]);
+    } else {
+      setPropertyPhotos(prev => [...prev, photoObj]);
+    }
+  };
+
+  // Handle property photo removal
+  const handleRemovePropertyPhoto = (photoId, isLivePhoto = false) => {
+    if (isLivePhoto) {
+      setLivePhotos(prev => {
+        const photo = prev.find(p => p.id === photoId);
+        if (photo && photo.preview) {
+          URL.revokeObjectURL(photo.preview);
+        }
+        return prev.filter(p => p.id !== photoId);
+      });
+    } else {
+      setPropertyPhotos(prev => {
+        const photo = prev.find(p => p.id === photoId);
+        if (photo && photo.preview) {
+          URL.revokeObjectURL(photo.preview);
+        }
+        return prev.filter(p => p.id !== photoId);
+      });
+    }
+  };
+
   // Local storage functions
   const saveDraft = () => {
     try {
@@ -295,6 +431,8 @@ const SaleDeedFormContent = () => {
         mallFloors,
         facilities,
         dynamicFacilities,
+        propertyPhotos,
+        livePhotos,
         calculations: calculationResults,
         timestamp: new Date().toISOString()
       };
@@ -519,6 +657,8 @@ const SaleDeedFormContent = () => {
       mallFloors,
       facilities,
       dynamicFacilities,
+      propertyPhotos,
+      livePhotos,
       calculations: results,
       amount: 1500, // Base amount for sale deed
       formType: 'sale-deed'
@@ -548,6 +688,8 @@ const SaleDeedFormContent = () => {
         mallFloors,
         facilities,
         dynamicFacilities,
+        propertyPhotos,
+        livePhotos,
         calculations: results
       };
 
@@ -609,6 +751,8 @@ const SaleDeedFormContent = () => {
       mallFloors,
       facilities,
       dynamicFacilities,
+      propertyPhotos,
+      livePhotos,
       calculations: results
     };
 
@@ -668,11 +812,17 @@ const SaleDeedFormContent = () => {
       deductionType: '',
       otherDeductionPercent: ''
     });
-    setSellers([{ name: '', relation: '', address: '', mobile: '', idType: '', idNo: '' }]);
-    setBuyers([{ name: '', relation: '', address: '', mobile: '', idType: '', idNo: '' }]);
+    // Clean up preview images
+    Object.values(previewImages).forEach(url => {
+      if (url) URL.revokeObjectURL(url);
+    });
+    setPreviewImages({});
+
+    setSellers([{ name: '', relation: '', address: '', mobile: '', idType: '', idNo: '', panCard: null, photo: null, id: null, signature: null }]);
+    setBuyers([{ name: '', relation: '', address: '', mobile: '', idType: '', idNo: '', panCard: null, photo: null, id: null, signature: null }]);
     setWitnesses([
-      { name: '', relation: '', address: '', mobile: '' },
-      { name: '', relation: '', address: '', mobile: '' }
+      { name: '', relation: '', address: '', mobile: '', panCard: null, photo: null, id: null, signature: null },
+      { name: '', relation: '', address: '', mobile: '', panCard: null, photo: null, id: null, signature: null }
     ]);
     setRooms([]);
     setTrees([]);
@@ -864,6 +1014,8 @@ const SaleDeedFormContent = () => {
                       mallFloors,
                       facilities,
                       dynamicFacilities,
+                      propertyPhotos,
+                      livePhotos,
                       calculations: results,
                       amount: 1500,
                       formType: 'sale-deed'
@@ -1539,6 +1691,140 @@ const SaleDeedFormContent = () => {
                     />
                   </div>
                 </div>
+
+                {/* File Upload Section for Seller */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h5 className="text-md font-semibold text-gray-700 mb-3">Documents & Uploads</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* PAN Card Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">PAN Card *</label>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileChange('seller', index, 'panCard', e.target.files[0])}
+                          className="w-full md:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0">
+                          {previewImages[`seller_${index}_panCard`] ? (
+                            <img
+                              src={previewImages[`seller_${index}_panCard`]}
+                              alt="PAN Card Preview"
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : seller.panCard ? (
+                            <span className="text-xs text-gray-500 text-center px-2">{seller.panCard.name}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400 text-center">Preview</span>
+                          )}
+                        </div>
+                      </div>
+                      {seller.panCard && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('seller', index, 'panCard')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Photo Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Photo *</label>
+                      <CameraCapture
+                        onCapture={(file, imageSrc) => handleCameraCapture('seller', index, 'photo', file, imageSrc)}
+                        label="Photo Capture"
+                        previewLabel="Photo Preview"
+                        width={240}
+                        height={300}
+                        aspectRatio={0.75}
+                        compact={true}
+                      />
+                      {seller.photo && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('seller', index, 'photo')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {/* ID Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">ID Document *</label>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileChange('seller', index, 'id', e.target.files[0])}
+                          className="w-full md:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0">
+                          {previewImages[`seller_${index}_id`] ? (
+                            <img
+                              src={previewImages[`seller_${index}_id`]}
+                              alt="ID Preview"
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : seller.id ? (
+                            <span className="text-xs text-gray-500 text-center px-2">{seller.id.name}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400 text-center">Preview</span>
+                          )}
+                        </div>
+                      </div>
+                      {seller.id && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('seller', index, 'id')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Signature Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Signature *</label>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange('seller', index, 'signature', e.target.files[0])}
+                          className="w-full md:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0">
+                          {previewImages[`seller_${index}_signature`] ? (
+                            <img
+                              src={previewImages[`seller_${index}_signature`]}
+                              alt="Signature Preview"
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : seller.signature ? (
+                            <span className="text-xs text-gray-500 text-center px-2">{seller.signature.name}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400 text-center">Preview</span>
+                          )}
+                        </div>
+                      </div>
+                      {seller.signature && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('seller', index, 'signature')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
 
@@ -1629,6 +1915,140 @@ const SaleDeedFormContent = () => {
                       value={buyer.idNo}
                       onChange={(e) => updateBuyer(index, 'idNo', e.target.value)}
                     />
+                  </div>
+                </div>
+
+                {/* File Upload Section for Buyer */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h5 className="text-md font-semibold text-gray-700 mb-3">Documents & Uploads</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* PAN Card Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">PAN Card *</label>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileChange('buyer', index, 'panCard', e.target.files[0])}
+                          className="w-full md:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0">
+                          {previewImages[`buyer_${index}_panCard`] ? (
+                            <img
+                              src={previewImages[`buyer_${index}_panCard`]}
+                              alt="PAN Card Preview"
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : buyer.panCard ? (
+                            <span className="text-xs text-gray-500 text-center px-2">{buyer.panCard.name}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400 text-center">Preview</span>
+                          )}
+                        </div>
+                      </div>
+                      {buyer.panCard && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('buyer', index, 'panCard')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Photo Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Photo *</label>
+                      <CameraCapture
+                        onCapture={(file, imageSrc) => handleCameraCapture('buyer', index, 'photo', file, imageSrc)}
+                        label="Photo Capture"
+                        previewLabel="Photo Preview"
+                        width={240}
+                        height={300}
+                        aspectRatio={0.75}
+                        compact={true}
+                      />
+                      {buyer.photo && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('buyer', index, 'photo')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {/* ID Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">ID Document *</label>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileChange('buyer', index, 'id', e.target.files[0])}
+                          className="w-full md:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0">
+                          {previewImages[`buyer_${index}_id`] ? (
+                            <img
+                              src={previewImages[`buyer_${index}_id`]}
+                              alt="ID Preview"
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : buyer.id ? (
+                            <span className="text-xs text-gray-500 text-center px-2">{buyer.id.name}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400 text-center">Preview</span>
+                          )}
+                        </div>
+                      </div>
+                      {buyer.id && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('buyer', index, 'id')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Signature Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Signature *</label>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange('buyer', index, 'signature', e.target.files[0])}
+                          className="w-full md:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0">
+                          {previewImages[`buyer_${index}_signature`] ? (
+                            <img
+                              src={previewImages[`buyer_${index}_signature`]}
+                              alt="Signature Preview"
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : buyer.signature ? (
+                            <span className="text-xs text-gray-500 text-center px-2">{buyer.signature.name}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400 text-center">Preview</span>
+                          )}
+                        </div>
+                      </div>
+                      {buyer.signature && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('buyer', index, 'signature')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1748,6 +2168,140 @@ const SaleDeedFormContent = () => {
                       }}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
+                  </div>
+                </div>
+
+                {/* File Upload Section for Witness */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h5 className="text-md font-semibold text-gray-700 mb-3">Documents & Uploads</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* PAN Card Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">PAN Card *</label>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileChange('witness', index, 'panCard', e.target.files[0])}
+                          className="w-full md:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0">
+                          {previewImages[`witness_${index}_panCard`] ? (
+                            <img
+                              src={previewImages[`witness_${index}_panCard`]}
+                              alt="PAN Card Preview"
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : witness.panCard ? (
+                            <span className="text-xs text-gray-500 text-center px-2">{witness.panCard.name}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400 text-center">Preview</span>
+                          )}
+                        </div>
+                      </div>
+                      {witness.panCard && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('witness', index, 'panCard')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Photo Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Photo *</label>
+                      <CameraCapture
+                        onCapture={(file, imageSrc) => handleCameraCapture('witness', index, 'photo', file, imageSrc)}
+                        label="Photo Capture"
+                        previewLabel="Photo Preview"
+                        width={240}
+                        height={300}
+                        aspectRatio={0.75}
+                        compact={true}
+                      />
+                      {witness.photo && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('witness', index, 'photo')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {/* ID Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">ID Document *</label>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileChange('witness', index, 'id', e.target.files[0])}
+                          className="w-full md:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0">
+                          {previewImages[`witness_${index}_id`] ? (
+                            <img
+                              src={previewImages[`witness_${index}_id`]}
+                              alt="ID Preview"
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : witness.id ? (
+                            <span className="text-xs text-gray-500 text-center px-2">{witness.id.name}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400 text-center">Preview</span>
+                          )}
+                        </div>
+                      </div>
+                      {witness.id && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('witness', index, 'id')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Signature Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Signature *</label>
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange('witness', index, 'signature', e.target.files[0])}
+                          className="w-full md:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="w-24 h-24 border border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0">
+                          {previewImages[`witness_${index}_signature`] ? (
+                            <img
+                              src={previewImages[`witness_${index}_signature`]}
+                              alt="Signature Preview"
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : witness.signature ? (
+                            <span className="text-xs text-gray-500 text-center px-2">{witness.signature.name}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400 text-center">Preview</span>
+                          )}
+                        </div>
+                      </div>
+                      {witness.signature && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile('witness', index, 'signature')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1923,6 +2477,53 @@ const SaleDeedFormContent = () => {
                   value={formData.directionWest}
                   onChange={(e) => handleInputChange('directionWest', e.target.value)}
                   className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Property Photos Section */}
+            <div className="mt-8 border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Property Photos</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Upload photos of the property. You can upload multiple photos.
+              </p>
+
+              {/* Property Photos Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Property Photos
+                </label>
+                <div className="flex flex-wrap gap-4 mb-4">
+                  {propertyPhotos.map((photo) => (
+                    <div key={photo.id} className="relative">
+                      <div className="w-32 h-32 border border-gray-300 rounded-lg overflow-hidden">
+                        <img
+                          src={photo.preview}
+                          alt="Property"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePropertyPhoto(photo.id, false)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handlePropertyPhotoUpload(e.target.files[0], false);
+                      e.target.value = ''; // Reset input
+                    }
+                  }}
+                  className="text-sm"
+                  multiple
                 />
               </div>
             </div>

@@ -14,6 +14,8 @@ export default function Staff4Dashboard() {
     weeklyProgress: 0
   });
   const [recentForms, setRecentForms] = useState([]);
+  const [allForms, setAllForms] = useState([]);
+  const [allFormsLoading, setAllFormsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { getAuthHeaders, user } = useAuth();
@@ -21,6 +23,36 @@ export default function Staff4Dashboard() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const fetchAllForms = async () => {
+    try {
+      setAllFormsLoading(true);
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
+      
+      // Fetch all forms without limit to show all forms
+      const formsResponse = await fetch(`${API_BASE}/api/staff/4/forms?limit=50`, {
+        headers: getAuthHeaders()
+      });
+
+      if (formsResponse.ok) {
+        const formsData = await formsResponse.json();
+        if (formsData.status === 'success' && formsData.data) {
+          setAllForms(formsData.data.forms || []);
+        } else {
+          console.error('All forms response error:', formsData);
+          setAllForms([]);
+        }
+      } else {
+        console.error('Failed to fetch all forms:', formsResponse.status);
+        setAllForms([]);
+      }
+    } catch (error) {
+      console.error('Error fetching all forms:', error);
+      setAllForms([]);
+    } finally {
+      setAllFormsLoading(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -44,8 +76,19 @@ export default function Staff4Dashboard() {
 
       if (formsResponse.ok) {
         const formsData = await formsResponse.json();
-        setRecentForms(formsData.data?.forms || []);
+        if (formsData.status === 'success' && formsData.data) {
+          setRecentForms(formsData.data.forms || []);
+        } else {
+          console.error('Forms response error:', formsData);
+          setRecentForms([]);
+        }
+      } else {
+        console.error('Failed to fetch recent forms:', formsResponse.status);
+        setRecentForms([]);
       }
+
+      // Fetch all forms for the All Forms section
+      await fetchAllForms();
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -56,20 +99,6 @@ export default function Staff4Dashboard() {
   };
 
   const dashboardCards = [
-    {
-      title: 'Pending Cross Verification',
-      value: stats.pendingCrossVerification,
-      icon: '🔍',
-      color: 'purple',
-      href: '/staff4/forms/pending'
-    },
-    {
-      title: 'Forms Verified',
-      value: stats.formsVerified,
-      icon: '✅',
-      color: 'green',
-      href: '/staff4/forms/verified'
-    },
     {
       title: 'Forms Corrected',
       value: stats.formsCorrected,
@@ -90,13 +119,6 @@ export default function Staff4Dashboard() {
       icon: '📋',
       color: 'indigo',
       href: '/staff4/reports'
-    },
-    {
-      title: 'Today\'s Tasks',
-      value: stats.todayTasks,
-      icon: '📅',
-      color: 'blue',
-      href: '/staff4/forms'
     }
   ];
 
@@ -159,8 +181,8 @@ export default function Staff4Dashboard() {
             <div className="ml-4">
               <h3 className="text-lg font-medium text-gray-900">Staff4 Responsibilities</h3>
               <p className="text-sm text-gray-600">
-                Cross-verify all work completed by Staff1, Staff2, and Staff3. Review entire forms, 
-                make corrections across all sections, and ensure final quality before approval.
+                Scan all documents: Staff 1 drafts, E-Stamp applications, Map Module documents, and all other forms. 
+                Review entire forms, make corrections across all sections, and ensure final quality before approval.
               </p>
             </div>
           </div>
@@ -195,13 +217,6 @@ export default function Staff4Dashboard() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
               <Link
-                href="/staff4/forms/pending"
-                className="flex items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
-              >
-                <span className="text-purple-600 mr-3">🔍</span>
-                <span className="text-sm font-medium text-gray-900">Start Cross Verification</span>
-              </Link>
-              <Link
                 href="/staff4/forms"
                 className="flex items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
               >
@@ -215,6 +230,13 @@ export default function Staff4Dashboard() {
                 <span className="text-indigo-600 mr-3">📋</span>
                 <span className="text-sm font-medium text-gray-900">Submit Verification Report</span>
               </Link>
+              <Link
+                href="/staff4/final-document"
+                className="flex items-center p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
+              >
+                <span className="text-green-600 mr-3">📄</span>
+                <span className="text-sm font-medium text-gray-900">Final Document</span>
+              </Link>
             </div>
           </div>
 
@@ -223,26 +245,144 @@ export default function Staff4Dashboard() {
             {recentForms.length > 0 ? (
               <div className="space-y-3">
                 {recentForms.map((form, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <Link
+                    key={form._id || index}
+                    href={`/staff4/forms/${form._id}`}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{form.formType || 'Form'}</p>
-                      <p className="text-xs text-gray-500">ID: {form._id}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {form.serviceType?.replace(/-/g, ' ').replace(/_/g, ' ').toUpperCase() || 
+                         form.formType?.replace(/_/g, ' ').toUpperCase() || 
+                         'Form'}
+                      </p>
+                      <p className="text-xs text-gray-500">ID: {form._id?.substring(0, 8)}...</p>
                     </div>
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      form.status === 'verified' ? 'bg-green-100 text-green-800' :
-                      form.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      form.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                      form.status === 'verified' || form.status === 'cross_verified' ? 'bg-green-100 text-green-800' :
+                      form.status === 'pending' || form.status === 'under_review' ? 'bg-yellow-100 text-yellow-800' :
+                      form.status === 'rejected' || form.status === 'needs_correction' ? 'bg-red-100 text-red-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {form.status || 'Pending'}
+                      {form.status?.replace(/_/g, ' ') || 'Pending'}
                     </span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
               <p className="text-sm text-gray-500">No recent forms</p>
             )}
           </div>
+        </div>
+
+        {/* All Forms Section */}
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-medium text-gray-900">All Forms</h2>
+              <p className="text-sm text-gray-500">All documents available for cross-verification</p>
+            </div>
+            <Link
+              href="/staff4/forms"
+              className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+            >
+              View All →
+            </Link>
+          </div>
+          
+          {allFormsLoading ? (
+            <div className="px-6 py-12 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+              <p className="mt-4 text-sm text-gray-600">Loading forms...</p>
+            </div>
+          ) : allForms.length > 0 ? (
+            <div className="divide-y divide-gray-200">
+              {allForms.map((form) => (
+                <Link
+                  key={form._id}
+                  href={`/staff4/forms/${form._id}`}
+                  className="block px-6 py-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {form.serviceType?.replace(/-/g, ' ').replace(/_/g, ' ').toUpperCase() || 
+                           form.formType?.replace(/_/g, ' ').toUpperCase() || 
+                           'Form'}
+                        </h3>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          form.status === 'verified' || form.status === 'cross_verified' ? 'bg-green-100 text-green-800' :
+                          form.status === 'pending' || form.status === 'under_review' ? 'bg-yellow-100 text-yellow-800' :
+                          form.status === 'rejected' || form.status === 'needs_correction' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {form.status?.replace(/_/g, ' ') || 'Pending'}
+                        </span>
+                        {form.serviceType === 'e-stamp' && (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">E-Stamp</span>
+                        )}
+                        {form.serviceType === 'map-module' && (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Map Module</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 space-y-1">
+                        <p>ID: {form._id?.substring(0, 12)}...</p>
+                        {form.createdAt && (
+                          <p>Created: {new Date(form.createdAt).toLocaleDateString()}</p>
+                        )}
+                        {form.data?.applicantName && (
+                          <p>Applicant: {form.data.applicantName}</p>
+                        )}
+                      </div>
+                      {/* Staff Verification Status */}
+                      <div className="mt-2 flex items-center space-x-4 text-xs">
+                        <div className="flex items-center">
+                          <span className={`w-2 h-2 rounded-full mr-1 ${
+                            form.approvals?.staff1?.approved ? 'bg-green-500' : 'bg-gray-300'
+                          }`}></span>
+                          <span className="text-gray-600">S1</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className={`w-2 h-2 rounded-full mr-1 ${
+                            form.approvals?.staff2?.approved ? 'bg-green-500' : 'bg-gray-300'
+                          }`}></span>
+                          <span className="text-gray-600">S2</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className={`w-2 h-2 rounded-full mr-1 ${
+                            form.approvals?.staff3?.approved ? 'bg-green-500' : 'bg-gray-300'
+                          }`}></span>
+                          <span className="text-gray-600">S3</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className={`w-2 h-2 rounded-full mr-1 ${
+                            form.approvals?.staff4?.approved ? 'bg-green-500' : 'bg-gray-300'
+                          }`}></span>
+                          <span className="text-gray-600">S4</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <span className="text-purple-600 text-sm font-medium">Cross Verify →</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="px-6 py-12 text-center">
+              <div className="text-gray-400 text-4xl mb-4">📋</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No forms found</h3>
+              <p className="text-gray-500 text-sm mb-4">No forms are available for cross-verification at this time.</p>
+              <Link
+                href="/staff4/forms"
+                className="inline-block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+              >
+                View All Forms
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Cross-Verification Tools */}

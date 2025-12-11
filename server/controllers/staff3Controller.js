@@ -16,12 +16,13 @@ class Staff3Controller {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      // Get forms that need Staff3 verification (land and plot details)
+      // Get forms that need Staff3 verification (land and plot details) - EXCLUDE e-stamp and map-module
       const pendingLandVerification = await FormsData.countDocuments({
         'approvals.staff1.approved': true,
         'approvals.staff2.approved': true,
         'approvals.staff3.approved': false,
         status: 'under_review',
+        serviceType: { $nin: ['e-stamp', 'map-module'] }, // Exclude e-stamp and map-module
         $or: [
           { 'data.landOwner': { $exists: true } },
           { 'data.landLocation': { $exists: true } },
@@ -35,12 +36,53 @@ class Staff3Controller {
         'approvals.staff2.approved': true,
         'approvals.staff3.approved': false,
         status: 'under_review',
+        serviceType: { $nin: ['e-stamp', 'map-module'] }, // Exclude e-stamp and map-module
         $or: [
           { 'data.plotNumber': { $exists: true } },
           { 'data.plotSize': { $exists: true } },
           { 'data.plotLength': { $exists: true } },
           { 'data.plotWidth': { $exists: true } },
           { 'data.plotArea': { $exists: true } }
+        ]
+      });
+
+      // Get pending E-Stamp and Map Module verifications
+      const pendingEStampMapVerification = await FormsData.countDocuments({
+        serviceType: { $in: ['e-stamp', 'map-module'] },
+        'approvals.staff2.approved': true,
+        'approvals.staff3.approved': false,
+        status: 'submitted'
+      });
+
+      // Get Staff 1 drafts that need Staff 3 verification
+      // Staff 3 can see all drafts created by Staff 1 (filledByStaff1: true)
+      const pendingStaff1Drafts = await FormsData.countDocuments({
+        filledByStaff1: true,
+        'approvals.staff3.approved': false,
+        $or: [
+          { status: { $in: ['submitted', 'under_review', 'draft'] } },
+          { status: { $exists: false } }
+        ]
+      });
+
+      // Get forms pending delivery verification
+      const pendingDeliveryVerification = await FormsData.countDocuments({
+        'approvals.staff3.approved': true,
+        'approvals.staff4.approved': { $ne: true }, // Not yet verified by Staff 4
+        $and: [
+          {
+            $or: [
+              { 'delivery.status': { $exists: false } },
+              { 'delivery.status': 'pending_user_selection' },
+              { 'delivery.status': 'user_selected' }
+            ]
+          },
+          {
+            $or: [
+              { 'delivery.staff3Verified': { $ne: true } },
+              { 'delivery.staff3Verified': { $exists: false } }
+            ]
+          }
         ]
       });
 
@@ -78,6 +120,9 @@ class Staff3Controller {
       const stats = {
         pendingLandVerification,
         pendingPlotVerification,
+        pendingEStampMapVerification,
+        pendingStaff1Drafts,
+        pendingDeliveryVerification,
         completedVerifications,
         formsCorrected,
         workReportsSubmitted,
@@ -115,7 +160,7 @@ class Staff3Controller {
    */
   static async getForms(req, res) {
     try {
-      const { page = 1, limit = 10, status, formType, search, verificationType, completed } = req.query;
+      const { page = 1, limit = 10, status, formType, serviceType, search, verificationType, completed, staff1Drafts, deliveryVerification } = req.query;
       const userId = req.user.id;
       
       // Build query for Staff3 forms
@@ -128,14 +173,67 @@ class Staff3Controller {
           'approvals.staff3.verifiedBy': userId  // Only show forms verified by this Staff3 user
         };
         // Don't restrict by status for completed forms - they can have various statuses
-      } else {
-        // Default: forms pending Staff3 verification (verified by Staff1 and Staff2, not yet by Staff3)
+      } else if (staff1Drafts === 'true') {
+        // Show all Staff 1 drafts that need Staff 3 verification
         query = {
+          filledByStaff1: true,
+          'approvals.staff3.approved': false,
+          $or: [
+            { status: { $in: ['submitted', 'under_review', 'draft'] } },
+            { status: { $exists: false } }
+          ]
+        };
+      } else if (deliveryVerification === 'true') {
+        // Show forms pending delivery verification by Staff 3
+        query = {
+          'approvals.staff3.approved': true,
+          'approvals.staff4.approved': { $ne: true }, // Not yet verified by Staff 4
+          $and: [
+            {
+              $or: [
+                { 'delivery.status': { $exists: false } },
+                { 'delivery.status': 'pending_user_selection' },
+                { 'delivery.status': 'user_selected' }
+              ]
+            },
+            {
+              $or: [
+                { 'delivery.staff3Verified': { $ne: true } },
+                { 'delivery.staff3Verified': { $exists: false } }
+              ]
+            }
+          ]
+        };
+      } else {
+        // Default: forms pending Staff3 verification
+        // EXCLUDE E-Stamp and Map Module from general forms query (they have their own page)
+        // For other forms: need Staff1 and Staff2 approval
+        query = {
+          serviceType: { $nin: ['e-stamp', 'map-module'] }, // Exclude e-stamp and map-module
           'approvals.staff1.approved': true,
           'approvals.staff2.approved': true,
           'approvals.staff3.approved': false,
           status: 'under_review'
         };
+
+        // If serviceType filter is specifically requesting e-stamp or map-module, include them
+        if (serviceType && (serviceType === 'e-stamp' || serviceType === 'map-module')) {
+          query = {
+            serviceType: serviceType,
+            'approvals.staff2.approved': true,
+            'approvals.staff3.approved': false,
+            status: 'submitted'
+          };
+        } else if (serviceType && serviceType.includes(',')) {
+          // Handle comma-separated service types (e.g., 'e-stamp,map-module')
+          const serviceTypes = serviceType.split(',').map(s => s.trim());
+          query = {
+            serviceType: { $in: serviceTypes },
+            'approvals.staff2.approved': true,
+            'approvals.staff3.approved': false,
+            status: 'submitted'
+          };
+        }
       }
 
       // Add other filters
@@ -417,12 +515,24 @@ class Staff3Controller {
         });
       }
 
-      // Check if Staff1 and Staff2 have verified
-      if (!form.approvals?.staff1?.approved || !form.approvals?.staff2?.approved) {
-        return res.status(403).json({
-          status: 'failed',
-          message: 'Form must be verified by Staff1 and Staff2 before Staff3 verification'
-        });
+      // For E-Stamp and Map Module, only Staff2 approval is required
+      // For other forms, both Staff1 and Staff2 approval is required
+      const isEStampOrMapModule = form.serviceType === 'e-stamp' || form.serviceType === 'map-module';
+      
+      if (isEStampOrMapModule) {
+        if (!form.approvals?.staff2?.approved) {
+          return res.status(403).json({
+            status: 'failed',
+            message: 'Form must be submitted by Staff2 before Staff3 verification'
+          });
+        }
+      } else {
+        if (!form.approvals?.staff1?.approved || !form.approvals?.staff2?.approved) {
+          return res.status(403).json({
+            status: 'failed',
+            message: 'Form must be verified by Staff1 and Staff2 before Staff3 verification'
+          });
+        }
       }
 
       // Build $set update object for MongoDB
@@ -448,7 +558,13 @@ class Staff3Controller {
 
       // Update form status based on approval
       if (approved) {
-        $set.status = 'under_review'; // Move to Staff4 (next stage)
+        // For E-Stamp and Map Module, go back to Staff2 for final approval
+        // For other forms, move to Staff4 (next stage)
+        if (isEStampOrMapModule) {
+          $set.status = 'verified'; // Ready for Staff2 to mark as final done
+        } else {
+          $set.status = 'under_review'; // Move to Staff4 (next stage)
+        }
         $set['approvals.staff3.status'] = 'verified';
       } else {
         $set.status = 'needs_correction';
@@ -458,9 +574,30 @@ class Staff3Controller {
       // If approved, update form data with any corrections
       // Also update original form collection if formId exists
       if (approved && updatedFields) {
-        // Merge updatedFields with existing form.data
-        const updatedData = { ...form.data, ...updatedFields };
+        // Deep merge updatedFields with existing form.data (handles nested objects)
+        const deepMerge = (target, source) => {
+          const output = { ...target };
+          for (const key in source) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+              output[key] = deepMerge(target[key] || {}, source[key]);
+            } else {
+              output[key] = source[key];
+            }
+          }
+          return output;
+        };
+        
+        const updatedData = deepMerge(form.data || {}, updatedFields);
         $set.data = updatedData;
+        $set.fields = deepMerge(form.fields || {}, updatedFields); // Also update fields
+        $set.rawFormData = deepMerge(form.rawFormData || {}, updatedFields); // Also update rawFormData
+        
+        // For E-Stamp and Map Module, update eStampData or mapModuleData
+        if (form.serviceType === 'e-stamp') {
+          $set.eStampData = deepMerge(form.eStampData || {}, updatedFields);
+        } else if (form.serviceType === 'map-module') {
+          $set.mapModuleData = deepMerge(form.mapModuleData || {}, updatedFields);
+        }
         
         // Update original form collection with property description and directions
         if (form.formId && form.serviceType) {
@@ -509,6 +646,34 @@ class Staff3Controller {
             logger.warn('Error updating original form collection:', originalUpdateError);
             // Continue even if original update fails - FormsData is the source of truth
           }
+        }
+      }
+      
+      // Also handle updates even if not approved (for corrections)
+      if (!approved && updatedFields) {
+        // Deep merge updatedFields with existing form.data (handles nested objects)
+        const deepMerge = (target, source) => {
+          const output = { ...target };
+          for (const key in source) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+              output[key] = deepMerge(target[key] || {}, source[key]);
+            } else {
+              output[key] = source[key];
+            }
+          }
+          return output;
+        };
+        
+        const updatedData = deepMerge(form.data || {}, updatedFields);
+        $set.data = updatedData;
+        $set.fields = deepMerge(form.fields || {}, updatedFields);
+        $set.rawFormData = deepMerge(form.rawFormData || {}, updatedFields);
+        
+        // For E-Stamp and Map Module, update eStampData or mapModuleData
+        if (form.serviceType === 'e-stamp') {
+          $set.eStampData = deepMerge(form.eStampData || {}, updatedFields);
+        } else if (form.serviceType === 'map-module') {
+          $set.mapModuleData = deepMerge(form.mapModuleData || {}, updatedFields);
         }
       }
 
@@ -598,14 +763,38 @@ class Staff3Controller {
         ? verificationType 
         : 'land';
       
+      // Deep merge function for nested objects
+      const deepMerge = (target, source) => {
+        const output = { ...target };
+        for (const key in source) {
+          if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            output[key] = deepMerge(target[key] || {}, source[key]);
+          } else {
+            output[key] = source[key];
+          }
+        }
+        return output;
+      };
+      
       // Update form data with Staff3 corrections
       const updateData = {
-        data: { ...form.data, ...updatedFields },
+        data: deepMerge(form.data || {}, updatedFields),
+        fields: deepMerge(form.fields || {}, updatedFields),
+        rawFormData: deepMerge(form.rawFormData || {}, updatedFields),
         'approvals.staff3.lastUpdatedBy': userId,
         'approvals.staff3.lastUpdatedAt': new Date(),
         'approvals.staff3.updateNotes': updateNotes,
-        'approvals.staff3.verificationType': validVerificationType
+        'approvals.staff3.verificationType': validVerificationType,
+        lastActivityBy: userId,
+        lastActivityAt: new Date()
       };
+      
+      // For E-Stamp and Map Module, also update eStampData or mapModuleData
+      if (form.serviceType === 'e-stamp') {
+        updateData.eStampData = deepMerge(form.eStampData || {}, updatedFields);
+      } else if (form.serviceType === 'map-module') {
+        updateData.mapModuleData = deepMerge(form.mapModuleData || {}, updatedFields);
+      }
 
       const updatedForm = await FormsData.findByIdAndUpdate(
         id,
@@ -831,6 +1020,78 @@ class Staff3Controller {
       res.status(500).json({
         status: 'failed',
         message: 'Error retrieving work reports'
+      });
+    }
+  }
+
+  /**
+   * Verify delivery option by Staff3
+   */
+  static async verifyDelivery(req, res) {
+    try {
+      const { id } = req.params;
+      const { approved, deliveryNotes, verifiedMethod } = req.body;
+      const userId = req.user.id;
+
+      const form = await FormsData.findById(id);
+      if (!form) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'Form not found'
+        });
+      }
+
+      // Check if form is verified by Staff3
+      if (!form.approvals?.staff3?.approved) {
+        return res.status(403).json({
+          status: 'failed',
+          message: 'Form must be verified by Staff3 before delivery verification'
+        });
+      }
+
+      // Initialize delivery object if it doesn't exist
+      const $set = {
+        'delivery.staff3Verified': approved,
+        'delivery.staff3VerifiedBy': userId,
+        'delivery.staff3VerifiedAt': new Date(),
+        'delivery.staff3VerificationNotes': deliveryNotes || (approved ? 'Delivery verified by Staff3' : 'Delivery rejected by Staff3'),
+        lastActivityBy: userId,
+        lastActivityAt: new Date()
+      };
+
+      if (approved && verifiedMethod) {
+        $set['delivery.verifiedMethod'] = verifiedMethod;
+      }
+
+      await FormsData.findByIdAndUpdate(id, { $set });
+
+      // Log activity
+      await AuditLog.logAction({
+        userId: req.user.id,
+        userRole: req.user.role,
+        action: 'delivery_verification',
+        resource: 'forms',
+        resourceId: form._id,
+        details: `Staff3 ${approved ? 'verified' : 'rejected'} delivery option for form ${form.serviceType}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      const updatedForm = await FormsData.findById(id);
+
+      res.json({
+        status: 'success',
+        message: `Delivery ${approved ? 'verified' : 'rejected'} successfully`,
+        data: {
+          form: updatedForm
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error verifying delivery by Staff3:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: error.message || 'Error verifying delivery'
       });
     }
   }

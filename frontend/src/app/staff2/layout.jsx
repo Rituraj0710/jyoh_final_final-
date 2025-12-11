@@ -7,10 +7,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const staff2NavItems = [
   { href: "/staff2/dashboard", label: "Dashboard", icon: "🏠" },
-  { href: "/staff2/forms", label: "Trustee Verification", icon: "👤" },
-  { href: "/staff2/forms/amount-verification", label: "Amount Verification", icon: "💰" },
-  { href: "/staff2/stamp-forms", label: "e-Stamp Forms", icon: "📄" },
-  { href: "/staff2/forms/completed", label: "Completed Verifications", icon: "✅" },
+  { href: "/staff2/e-stamp", label: "E-Stamp Application", icon: "📝" },
+  { href: "/staff2/map-module", label: "Map Module", icon: "🗺️" },
+  { href: "/staff2/final-approval", label: "Final Approval", icon: "✅" },
   { href: "/staff2/work-report", label: "Work Report", icon: "📋" }
 ];
 

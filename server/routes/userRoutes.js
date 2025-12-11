@@ -33,6 +33,10 @@ router.get("/forms", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user
 router.get("/forms/:id", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.getUserFormById);
 router.get("/forms/:id/download", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user', 'admin', 'staff_1', 'staff_2', 'staff_3', 'staff_4', 'staff_5', 'staff_6', 'staff_7'), UserController.downloadUserForm);
 
+// User Delivery Routes
+router.get("/delivery/forms", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user'), UserController.getDeliveryForms);
+router.put("/delivery/forms/:id/preference", setAuthHeader, accessTokenAutoRefresh, authorizeRoles('user', 'user1', 'user2', 'normal_user', 'agent_user'), UserController.setDeliveryPreference);
+
 // Payment endpoints (temporary - to be moved to dedicated payment routes)
 router.post("/payment/initialize", (req, res) => {
   try {

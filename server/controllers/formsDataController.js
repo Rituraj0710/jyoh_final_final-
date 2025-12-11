@@ -7,6 +7,7 @@ import Ledger from '../models/Ledger.js';
 import logger from '../config/logger.js';
 import { successResponse, errorResponse } from '../utils/responseHelper.js';
 import AuditService from '../services/auditService.js';
+import { generateFormattedFormId } from '../utils/formIdGenerator.js';
 
 class FormsDataController {
   // Helper function to clean empty fields (convert empty strings to null)
@@ -108,9 +109,13 @@ class FormsDataController {
           message: 'Form updated successfully'
         });
       } else {
+        // Generate formatted form ID
+        const formattedId = await generateFormattedFormId(serviceType);
+        
         // Create new form
         formData = new FormsData({
           formId: formId || new mongoose.Types.ObjectId(),
+          formattedFormId: formattedId,
           serviceType,
           userId,
           fields: cleanedFields,
@@ -148,8 +153,17 @@ class FormsDataController {
   // Submit form (mark as completed)
   static async submitForm(req, res) {
     try {
-      const { formId, serviceType, fields } = req.body;
-      const userId = req.user.id;
+      const { formId, serviceType, fields, onBehalfOfUserId } = req.body;
+      
+      // For Staff 1, allow submitting on behalf of users (including offline users with null userId)
+      // For regular users, use their own ID
+      let userId;
+      if (req.user.role === 'staff1' && onBehalfOfUserId !== undefined) {
+        // Staff 1 can submit on behalf of users (userId can be null for offline users)
+        userId = onBehalfOfUserId || null;
+      } else {
+        userId = req.user.id;
+      }
 
       // Validate required fields
       if (!serviceType || !fields) {
@@ -174,19 +188,34 @@ class FormsDataController {
       }));
 
       // Find existing form or create new one
+      // For Staff 1 submitting on behalf, use staff1's ID in the query if userId is null
+      const queryUserId = userId || req.user.id;
       let formData = await FormsData.findOne({ 
         formId: formId || new mongoose.Types.ObjectId(),
-        userId,
+        userId: queryUserId,
         serviceType 
       });
 
+      // If not found and Staff 1 is submitting on behalf, try to find by formId only
+      if (!formData && req.user.role === 'staff1' && formId) {
+        formData = await FormsData.findOne({ formId });
+      }
+
       if (formData) {
         // Update and submit existing form
-        await formData.submitForm(cleanedFields, userId);
+        // If Staff 1 is submitting on behalf, update userId
+        if (req.user.role === 'staff1' && onBehalfOfUserId !== undefined) {
+          formData.userId = userId;
+          formData.filledByStaff1 = true;
+          formData.filledByStaff1Id = req.user.id;
+          formData.filledByStaff1At = new Date();
+        }
+        
+        await formData.submitForm(cleanedFields, queryUserId);
         
         // Log comprehensive audit trail
         await AuditService.logFormSubmit(
-          userId, 
+          queryUserId, 
           req.user.role, 
           formData._id, 
           formData, 
@@ -196,31 +225,50 @@ class FormsDataController {
         
         return successResponse(res, 'Form submitted successfully', {
           formData,
+          id: formData._id, // Include id for frontend compatibility
+          formId: formData._id, // Also include as formId
           message: 'Form submitted and marked as completed'
         });
       } else {
         // Create and submit new form
+        // Validate userId - required unless Staff 1 is filling for offline user
+        if (!userId && req.user.role !== 'staff1') {
+          return errorResponse(res, 'User ID is required', null, 400);
+        }
+
+        // Generate formatted form ID
+        const formattedId = await generateFormattedFormId(serviceType);
+        
         formData = new FormsData({
           formId: formId || new mongoose.Types.ObjectId(),
+          formattedFormId: formattedId,
           serviceType,
-          userId,
+          userId: userId, // Can be null for offline users when Staff 1 fills
           fields: cleanedFields,
           data: cleanedFields, // Also populate data field for staff compatibility
           uploadedFiles: uploadedFiles, // Store uploaded files
-          status: 'completed',
+          status: 'submitted', // Start with 'submitted' status, same as normal users
           submittedAt: new Date(),
-          completedAt: new Date(),
-          lastActivityBy: userId,
+          lastActivityBy: req.user.id, // Staff 1's ID or user's ID
           progressPercentage: 100
         });
+
+        // Mark if filled by Staff 1
+        if (req.user.role === 'staff1') {
+          formData.filledByStaff1 = true;
+          formData.filledByStaff1Id = req.user.id;
+          formData.filledByStaff1At = new Date();
+        }
 
         await formData.save();
         
         // Log activity
-        await FormsDataController.logActivity('Form Submitted', userId, formData._id, 'Success');
+        await FormsDataController.logActivity('Form Submitted', req.user.id, formData._id, 'Success');
         
         return res.status(201).json(successResponse(res, 'Form submitted successfully', {
           formData,
+          id: formData._id, // Include id for frontend compatibility
+          formId: formData._id, // Also include as formId
           message: 'Form created and submitted'
         }));
       }

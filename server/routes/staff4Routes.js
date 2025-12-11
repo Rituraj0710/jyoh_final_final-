@@ -25,4 +25,13 @@ router.post('/reports', authLimiter, Staff4Controller.submitWorkReport);
 router.post('/cross-verification-report', authLimiter, Staff4Controller.submitCrossVerificationReport);
 router.get('/reports', authLimiter, Staff4Controller.getWorkReports);
 
+// Delivery routes
+router.get('/delivery/forms', authLimiter, Staff4Controller.getDeliveryForms);
+router.put('/delivery/forms/:id/set-method', authLimiter, Staff4Controller.setDeliveryMethod);
+router.put('/delivery/forms/:id/dispatch', authLimiter, Staff4Controller.markDispatched);
+router.put('/delivery/forms/:id/delivered', authLimiter, Staff4Controller.markDelivered);
+
+// Final Document routes
+router.get('/forms/:id/final-document', authLimiter, Staff4Controller.generateFinalDocument);
+
 export default router;

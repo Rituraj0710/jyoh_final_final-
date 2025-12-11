@@ -1,5 +1,6 @@
 import FormsData from '../models/FormsData.js';
 import logger from '../config/logger.js';
+import { generateFormattedFormId } from '../utils/formIdGenerator.js';
 
 /**
  * Middleware to sync form submissions to FormsData collection
@@ -104,9 +105,13 @@ async function syncFormToFormsData(req, responseData) {
       // Continue with empty formData - will use rawFormData instead
     }
     
+    // Generate formatted form ID
+    const formattedId = await generateFormattedFormId(serviceType);
+    
     // Create new FormsData entry
     const formsDataEntry = new FormsData({
       formId: formId,
+      formattedFormId: formattedId,
       serviceType: serviceType,
       userId: user?.id || user?._id,
       status: 'submitted',

@@ -109,51 +109,57 @@ class Staff4Controller {
    */
   static async getForms(req, res) {
     try {
-      const { page = 1, limit = 10, status, formType, search, verificationStage } = req.query;
+      const { page = 1, limit = 10, status, formType, search, verificationStage, serviceType } = req.query;
       const userId = req.user.id;
       
       // Build query for Staff4 forms
-      // Handle different status queries: 'cross_verified' for verified forms, default for pending
+      // Staff 4 scans ALL documents: Staff 1 drafts, E-Stamp, Map Module, and all other forms
       let query = {};
 
       // If status is 'cross_verified', show forms that Staff4 has verified
       if (status === 'cross_verified') {
         query = {
-          'approvals.staff1.approved': true,
-          'approvals.staff2.approved': true,
-          'approvals.staff3.approved': true,
           'approvals.staff4.approved': true,  // Staff4 has verified
           'approvals.staff4.verifiedBy': userId  // Verified by current Staff4 user
         };
         query.status = 'cross_verified';  // Also match the status field
       } else {
-        // Default: Show forms ready for Staff4 cross-verification (all staff approved, Staff4 not yet)
-        query = {
-          'approvals.staff1.approved': true,
-          'approvals.staff2.approved': true,
-          'approvals.staff3.approved': true,
-          'approvals.staff4.approved': false  // Not yet cross-verified by Staff4
-        };
-
-        // Add verification stage filter
-        if (verificationStage === 'staff1_complete') {
+        // Handle verification stage filter first (if specified)
+        if (verificationStage === 'staff1_drafts') {
+          // Only Staff 1 drafts
+          query = {
+            $or: [
+              { 'approvals.staff1.approved': { $ne: true } },
+              { 'approvals.staff1.approved': { $exists: false } }
+            ]
+          };
+        } else if (verificationStage === 'e_stamp') {
+          // Only E-Stamp forms
+          query = {
+            serviceType: 'e-stamp'
+          };
+        } else if (verificationStage === 'map_module') {
+          // Only Map Module forms
+          query = {
+            serviceType: 'map-module'
+          };
+        } else if (verificationStage === 'staff1_complete') {
           query = {
             'approvals.staff1.approved': true,
-            'approvals.staff2.approved': false
+            'approvals.staff2.approved': { $ne: true }
           };
         } else if (verificationStage === 'staff2_complete') {
           query = {
             'approvals.staff1.approved': true,
             'approvals.staff2.approved': true,
-            'approvals.staff3.approved': false
+            'approvals.staff3.approved': { $ne: true }
           };
-        } else if (verificationStage === 'staff3_complete' || verificationStage === 'all') {
-          // Default behavior: forms ready for Staff4 (all three staff approved, Staff4 not yet)
+        } else if (verificationStage === 'staff3_complete') {
           query = {
             'approvals.staff1.approved': true,
             'approvals.staff2.approved': true,
             'approvals.staff3.approved': true,
-            'approvals.staff4.approved': false
+            'approvals.staff4.approved': { $ne: true }
           };
         } else if (verificationStage === 'all_complete') {
           // Show all forms that have passed all staff levels (including Staff4)
@@ -161,21 +167,50 @@ class Staff4Controller {
             'approvals.staff1.approved': true,
             'approvals.staff2.approved': true,
             'approvals.staff3.approved': true
-            // Don't restrict Staff4 - show both verified and unverified
           };
+        } else {
+          // Default: Staff 4 can see ALL documents
+          // Since Staff 4 scans all documents, we'll use an empty query to get everything
+          // This is simpler and more reliable than complex $or conditions
+          query = {};
         }
 
         // Add other status filters (if not already set above)
-        if (status) {
-          query.status = status;
-        } else if (!verificationStage || verificationStage === 'all' || verificationStage === 'staff3_complete') {
-          // Default status filter for ready-to-verify forms
-          query.status = { $in: ['under_review', 'submitted'] };
+        if (status && status !== 'cross_verified') {
+          if (query.$or && Array.isArray(query.$or)) {
+            // If we have $or conditions, wrap them with $and to add status filter
+            query = {
+              $and: [
+                { $or: query.$or },
+                { status: status }
+              ]
+            };
+          } else {
+            query.status = status;
+          }
+        }
+      }
+
+      // Filter by serviceType if provided
+      if (serviceType) {
+        if (query.$or && Array.isArray(query.$or)) {
+          // If we have $or conditions, wrap them with $and to add serviceType filter
+          query = {
+            $and: [
+              { $or: query.$or },
+              { serviceType: serviceType }
+            ]
+          };
+        } else if (query.$and && Array.isArray(query.$and)) {
+          // If we already have $and, add serviceType to it
+          query.$and.push({ serviceType: serviceType });
+        } else {
+          query.serviceType = serviceType;
         }
       }
 
       // Fix: FormsData uses 'serviceType', not 'formType'
-      if (formType) {
+      if (formType && !serviceType) {
         // Map formType to serviceType
         const serviceTypeMap = {
           'sale-deed': 'sale-deed',
@@ -184,22 +219,36 @@ class Staff4Controller {
           'property-registration': 'property-registration',
           'property-sale-certificate': 'property-sale-certificate',
           'power-of-attorney': 'power-of-attorney',
-          'adoption-deed': 'adoption-deed'
+          'adoption-deed': 'adoption-deed',
+          'e-stamp': 'e-stamp',
+          'map-module': 'map-module'
         };
-        if (serviceTypeMap[formType]) {
-          query.serviceType = serviceTypeMap[formType];
+        const mappedServiceType = serviceTypeMap[formType] || formType;
+        
+        if (query.$or && Array.isArray(query.$or)) {
+          // Wrap $or with $and to add serviceType filter
+          query = {
+            $and: [
+              { $or: query.$or },
+              { serviceType: mappedServiceType }
+            ]
+          };
+        } else if (query.$and && Array.isArray(query.$and)) {
+          // If we already have $and, add serviceType to it
+          query.$and.push({ serviceType: mappedServiceType });
         } else {
-          // Try direct match in case formType is already serviceType
-          query.serviceType = formType;
+          query.serviceType = mappedServiceType;
         }
       }
 
-      // Enhanced search filter - include sale-deed specific fields
+      // Enhanced search filter - include all form types and E-Stamp/Map Module fields
       if (search) {
         const searchRegex = { $regex: search, $options: 'i' };
-        query.$or = [
+        const searchConditions = [
           { _id: searchRegex },
           { serviceType: searchRegex },
+          { formTitle: searchRegex },
+          { formDescription: searchRegex },
           { 'data.applicantName': searchRegex },
           { 'data.name': searchRegex },
           { 'data.testatorName': searchRegex },
@@ -213,16 +262,50 @@ class Staff4Controller {
           { 'data.district': searchRegex },
           { 'data.village': searchRegex },
           { 'data.colonyName': searchRegex },
-          { 'sellers.name': searchRegex },
-          { 'buyers.name': searchRegex },
           { 'data.sellers': { $elemMatch: { name: searchRegex } } },
-          { 'data.buyers': { $elemMatch: { name: searchRegex } } }
+          { 'data.buyers': { $elemMatch: { name: searchRegex } } },
+          // E-Stamp fields
+          { 'data.f_name': searchRegex },
+          { 'data.s_name': searchRegex },
+          { 'data.property': searchRegex },
+          { 'data.article': searchRegex },
+          // Map Module fields
+          { 'data.propertyType': searchRegex },
+          { 'data.propertySubType': searchRegex },
+          { 'data.propertyAddress': searchRegex }
         ];
+
+        // If query already has $or or $and, combine with $and
+        if (query.$or && Array.isArray(query.$or)) {
+          if (query.$and && Array.isArray(query.$and)) {
+            // Already has $and, add search to it
+            query.$and.push({ $or: searchConditions });
+          } else {
+            // Convert $or to $and with search
+            query = {
+              $and: [
+                { $or: query.$or },
+                { $or: searchConditions }
+              ]
+            };
+          }
+        } else if (query.$and && Array.isArray(query.$and)) {
+          // Already has $and, add search to it
+          query.$and.push({ $or: searchConditions });
+        } else {
+          // No existing $or or $and, just use search
+          query.$or = searchConditions;
+        }
+      }
+
+      // Ensure query is not empty - if it is, return all forms
+      if (Object.keys(query).length === 0) {
+        query = {};
       }
 
       // Log the query for debugging
       logger.info('Staff4 getForms query:', JSON.stringify(query, null, 2));
-      logger.info('Staff4 getForms params:', { page, limit, status, formType, search, verificationStage });
+      logger.info('Staff4 getForms params:', { page, limit, status, formType, search, verificationStage, serviceType });
 
       const skip = (page - 1) * limit;
       
@@ -231,14 +314,37 @@ class Staff4Controller {
         ? { 'approvals.staff4.verifiedAt': -1 } 
         : { createdAt: -1 };
       
-      const forms = await FormsData.find(query)
-        .populate('userId', 'name email')
-        .populate('assignedTo', 'name email role')
-        .sort(sortOrder)
-        .skip(skip)
-        .limit(parseInt(limit));
+      let forms, total;
+      try {
+        forms = await FormsData.find(query)
+          .populate('userId', 'name email')
+          .populate('assignedTo', 'name email role')
+          .sort(sortOrder)
+          .skip(skip)
+          .limit(parseInt(limit));
 
-      const total = await FormsData.countDocuments(query);
+        total = await FormsData.countDocuments(query);
+      } catch (dbError) {
+        logger.error('Database query error in Staff4 getForms:', dbError);
+        logger.error('Query that failed:', JSON.stringify(query, null, 2));
+        
+        // Fallback: Try a simpler query if the complex one fails
+        try {
+          logger.warn('Attempting fallback query: all forms');
+          const fallbackQuery = {};
+          forms = await FormsData.find(fallbackQuery)
+            .populate('userId', 'name email')
+            .populate('assignedTo', 'name email role')
+            .sort(sortOrder)
+            .skip(skip)
+            .limit(parseInt(limit));
+          total = await FormsData.countDocuments(fallbackQuery);
+          logger.info('Fallback query succeeded, returning all forms');
+        } catch (fallbackError) {
+          logger.error('Fallback query also failed:', fallbackError);
+          throw new Error(`Database query failed: ${dbError.message}`);
+        }
+      }
       
       logger.info(`Staff4 getForms results: ${forms.length} forms found out of ${total} total`);
 
@@ -275,9 +381,11 @@ class Staff4Controller {
 
     } catch (error) {
       logger.error('Error getting Staff4 forms:', error);
+      logger.error('Error stack:', error.stack);
       res.status(500).json({
         status: 'failed',
-        message: 'Error retrieving forms'
+        message: error.message || 'Error retrieving forms',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }
@@ -666,6 +774,9 @@ class Staff4Controller {
       if (approved) {
         $set.status = 'cross_verified';
         $set['approvals.staff4.status'] = 'verified';
+        // Mark form as ready for delivery
+        $set['delivery.readyForDeliveryAt'] = new Date();
+        $set['delivery.status'] = 'pending_user_selection';
       } else {
         $set.status = 'needs_correction';
         $set['approvals.staff4.status'] = 'needs_correction';
@@ -1129,6 +1240,517 @@ class Staff4Controller {
       res.status(500).json({
         status: 'failed',
         message: 'Error retrieving work reports'
+      });
+    }
+  }
+
+  /**
+   * Get forms ready for delivery management
+   */
+  static async getDeliveryForms(req, res) {
+    try {
+      const { page = 1, limit = 10, status, search } = req.query;
+      const userId = req.user.id;
+
+      // Find forms that are completed/cross-verified and ready for delivery
+      let query = {
+        $or: [
+          { 'approvals.staff4.approved': true },
+          { status: 'cross_verified' },
+          { status: 'completed' }
+        ],
+        'delivery.status': { $ne: 'delivered' } // Exclude already delivered
+      };
+
+      // Filter by delivery status
+      if (status) {
+        query['delivery.status'] = status;
+      }
+
+      // Search filter
+      if (search) {
+        const searchRegex = { $regex: search, $options: 'i' };
+        query.$or = [
+          { _id: searchRegex },
+          { serviceType: searchRegex },
+          { 'data.applicantName': searchRegex },
+          { 'data.name': searchRegex },
+          { 'userId.name': searchRegex },
+          { 'userId.email': searchRegex }
+        ];
+      }
+
+      const skip = (page - 1) * limit;
+      
+      const forms = await FormsData.find(query)
+        .populate('userId', 'name email phone')
+        .populate('delivery.staff4Decision.decidedBy', 'name email')
+        .sort({ 'delivery.readyForDeliveryAt': -1, createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const total = await FormsData.countDocuments(query);
+
+      // Calculate which forms need Staff4 decision (1 week passed without user selection)
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      const processedForms = forms.map(form => {
+        const formObj = form.toObject();
+        const readyDate = form.delivery?.readyForDeliveryAt || form.updatedAt || form.createdAt;
+        const needsStaff4Decision = 
+          form.delivery?.status === 'pending_user_selection' && 
+          readyDate < oneWeekAgo;
+        
+        formObj.needsStaff4Decision = needsStaff4Decision;
+        formObj.daysSinceReady = Math.floor((new Date() - readyDate) / (1000 * 60 * 60 * 24));
+        return formObj;
+      });
+
+      res.json({
+        status: 'success',
+        data: {
+          forms: processedForms,
+          pagination: {
+            current: parseInt(page),
+            pages: Math.ceil(total / limit),
+            total,
+            limit: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Error getting delivery forms:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Error retrieving delivery forms'
+      });
+    }
+  }
+
+  /**
+   * Set delivery method by Staff4
+   */
+  static async setDeliveryMethod(req, res) {
+    try {
+      const { id } = req.params;
+      const { method, deliveryAddress, contactPhone, trackingNumber, notes } = req.body;
+      const userId = req.user.id;
+
+      if (!method || !['pickup', 'courier', 'email', 'postal'].includes(method)) {
+        return res.status(400).json({
+          status: 'failed',
+          message: 'Valid delivery method is required'
+        });
+      }
+
+      const form = await FormsData.findById(id);
+      if (!form) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'Form not found'
+        });
+      }
+
+      // Update delivery information
+      form.delivery = form.delivery || {};
+      form.delivery.staff4Decision = {
+        method,
+        decidedAt: new Date(),
+        decidedBy: userId,
+        deliveryAddress: deliveryAddress || null,
+        contactPhone: contactPhone || null,
+        trackingNumber: trackingNumber || null,
+        notes: notes || null
+      };
+      form.delivery.finalMethod = method;
+      form.delivery.status = 'staff4_decided';
+
+      // If readyForDeliveryAt is not set, set it now
+      if (!form.delivery.readyForDeliveryAt) {
+        form.delivery.readyForDeliveryAt = new Date();
+      }
+
+      await form.save();
+
+      // Log the action
+      await AuditLog.logAction({
+        userId: req.user.id,
+        userRole: req.user.role,
+        action: 'delivery_method_set',
+        resource: 'forms_data',
+        resourceId: id,
+        details: `Staff4 set delivery method: ${method}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        status: 'success',
+        message: 'Delivery method set successfully',
+        data: { form }
+      });
+    } catch (error) {
+      logger.error('Error setting delivery method:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Error setting delivery method'
+      });
+    }
+  }
+
+  /**
+   * Mark form as dispatched
+   */
+  static async markDispatched(req, res) {
+    try {
+      const { id } = req.params;
+      const { trackingNumber, notes } = req.body;
+      const userId = req.user.id;
+
+      const form = await FormsData.findById(id);
+      if (!form) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'Form not found'
+        });
+      }
+
+      form.delivery = form.delivery || {};
+      form.delivery.status = 'dispatched';
+      form.delivery.dispatchedAt = new Date();
+      if (trackingNumber) {
+        form.delivery.staff4Decision = form.delivery.staff4Decision || {};
+        form.delivery.staff4Decision.trackingNumber = trackingNumber;
+      }
+      if (notes) {
+        form.delivery.staff4Decision = form.delivery.staff4Decision || {};
+        form.delivery.staff4Decision.notes = notes;
+      }
+
+      await form.save();
+
+      await AuditLog.logAction({
+        userId: req.user.id,
+        userRole: req.user.role,
+        action: 'delivery_dispatched',
+        resource: 'forms_data',
+        resourceId: id,
+        details: 'Form marked as dispatched',
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        status: 'success',
+        message: 'Form marked as dispatched',
+        data: { form }
+      });
+    } catch (error) {
+      logger.error('Error marking form as dispatched:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Error marking form as dispatched'
+      });
+    }
+  }
+
+  /**
+   * Mark form as delivered
+   */
+  static async markDelivered(req, res) {
+    try {
+      const { id } = req.params;
+      const { notes } = req.body;
+      const userId = req.user.id;
+
+      const form = await FormsData.findById(id);
+      if (!form) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'Form not found'
+        });
+      }
+
+      form.delivery = form.delivery || {};
+      form.delivery.status = 'delivered';
+      form.delivery.deliveredAt = new Date();
+      if (notes) {
+        form.delivery.staff4Decision = form.delivery.staff4Decision || {};
+        form.delivery.staff4Decision.notes = (form.delivery.staff4Decision.notes || '') + '\n' + notes;
+      }
+
+      await form.save();
+
+      await AuditLog.logAction({
+        userId: req.user.id,
+        userRole: req.user.role,
+        action: 'delivery_completed',
+        resource: 'forms_data',
+        resourceId: id,
+        details: 'Form marked as delivered',
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        status: 'success',
+        message: 'Form marked as delivered',
+        data: { form }
+      });
+    } catch (error) {
+      logger.error('Error marking form as delivered:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Error marking form as delivered'
+      });
+    }
+  }
+
+  /**
+   * Generate final document PDF for a verified form
+   */
+  static async generateFinalDocument(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      // Fetch the form
+      const formsDataDoc = await FormsData.findById(id)
+        .populate('userId', 'name email')
+        .populate('approvals.staff1.verifiedBy', 'name')
+        .populate('approvals.staff2.verifiedBy', 'name')
+        .populate('approvals.staff3.verifiedBy', 'name')
+        .populate('approvals.staff4.verifiedBy', 'name');
+
+      if (!formsDataDoc) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'Form not found'
+        });
+      }
+
+      // Check if form is ready for final document (all approvals complete)
+      const isReady = formsDataDoc.approvals?.staff1?.approved &&
+                      formsDataDoc.approvals?.staff2?.approved &&
+                      formsDataDoc.approvals?.staff3?.approved &&
+                      formsDataDoc.approvals?.staff4?.approved;
+
+      if (!isReady) {
+        return res.status(400).json({
+          status: 'failed',
+          message: 'Form is not ready for final document generation. All staff approvals must be complete.'
+        });
+      }
+
+      // Fetch original form data if available
+      let originalFormData = null;
+      if (formsDataDoc.formId && formsDataDoc.serviceType) {
+        try {
+          const modelMap = {
+            'will-deed': (await import('../models/WillDeed.js')).default,
+            'sale-deed': (await import('../models/SaleDeed.js')).default,
+            'trust-deed': (await import('../models/TrustDeed.js')).default,
+            'power-of-attorney': (await import('../models/PowerOfAttorney.js')).default,
+            'adoption-deed': (await import('../models/AdoptionDeed.js')).default,
+            'property-registration': (await import('../models/PropertyRegistration.js')).default,
+            'property-sale-certificate': (await import('../models/PropertySaleCertificate.js')).default
+          };
+
+          const Model = modelMap[formsDataDoc.serviceType];
+          if (Model) {
+            originalFormData = await Model.findById(formsDataDoc.formId);
+          }
+        } catch (error) {
+          logger.warn('Error fetching original form data for final document:', error);
+        }
+      }
+
+      // Merge all form data
+      const allFormData = {
+        ...formsDataDoc.fields,
+        ...formsDataDoc.data,
+        ...(originalFormData ? originalFormData.toObject() : {})
+      };
+
+      // Import PDFDocument
+      const PDFDocument = (await import('pdfkit')).default;
+      const doc = new PDFDocument({
+        size: 'A4',
+        margin: 50,
+        info: {
+          Title: `Final Document - ${formsDataDoc.serviceType?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+          Author: 'Property Registration System',
+          Subject: 'Final Verified Document',
+          Creator: 'Staff4 Final Document Generator'
+        }
+      });
+
+      // Set response headers
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="final-document-${formsDataDoc._id}.pdf"`);
+
+      // Pipe PDF to response
+      doc.pipe(res);
+
+      // Helper functions
+      const formatFieldName = (key) => {
+        return key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/[_-]/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase())
+          .trim();
+      };
+
+      const formatValue = (value) => {
+        if (value === null || value === undefined) return 'N/A';
+        if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+        if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+          return JSON.stringify(value, null, 2);
+        }
+        if (Array.isArray(value)) {
+          return value.map(item => typeof item === 'object' ? JSON.stringify(item) : String(item)).join(', ');
+        }
+        return String(value);
+      };
+
+      let yPos = 50;
+
+      // Header
+      doc.fontSize(24).font('Helvetica-Bold').fillColor('black')
+        .text('FINAL DOCUMENT', 50, yPos, { align: 'center' });
+      yPos += 30;
+      
+      doc.fontSize(16).font('Helvetica')
+        .text(formsDataDoc.serviceType?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Form', 50, yPos, { align: 'center' });
+      yPos += 40;
+
+      // Form Information Section
+      doc.fontSize(14).font('Helvetica-Bold').text('Form Information', 50, yPos);
+      yPos += 20;
+      doc.moveTo(50, yPos).lineTo(545, yPos).stroke();
+      yPos += 15;
+
+      doc.fontSize(10).font('Helvetica');
+      doc.text(`Form ID: ${formsDataDoc._id}`, 60, yPos);
+      yPos += 15;
+      doc.text(`Formatted ID: ${formsDataDoc.formattedFormId || 'N/A'}`, 60, yPos);
+      yPos += 15;
+      doc.text(`Service Type: ${formsDataDoc.serviceType?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`, 60, yPos);
+      yPos += 15;
+      doc.text(`Status: ${formsDataDoc.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`, 60, yPos);
+      yPos += 15;
+      
+      if (formsDataDoc.userId) {
+        doc.text(`Submitted By: ${formsDataDoc.userId.name || 'N/A'}`, 60, yPos);
+        yPos += 15;
+        doc.text(`Email: ${formsDataDoc.userId.email || 'N/A'}`, 60, yPos);
+        yPos += 15;
+      }
+      
+      doc.text(`Created At: ${new Date(formsDataDoc.createdAt).toLocaleString()}`, 60, yPos);
+      yPos += 20;
+
+      // Verification Status Section
+      doc.fontSize(14).font('Helvetica-Bold').text('Verification Status', 50, yPos);
+      yPos += 20;
+      doc.moveTo(50, yPos).lineTo(545, yPos).stroke();
+      yPos += 15;
+
+      doc.fontSize(10).font('Helvetica');
+      const staffLevels = ['staff1', 'staff2', 'staff3', 'staff4'];
+      staffLevels.forEach((staff, index) => {
+        const approval = formsDataDoc.approvals?.[staff];
+        if (approval) {
+          const verifiedBy = approval.verifiedBy?.name || 'N/A';
+          const verifiedAt = approval.verifiedAt ? new Date(approval.verifiedAt).toLocaleString() : 'N/A';
+          const status = approval.approved ? '✓ Approved' : '✗ Pending';
+          
+          doc.text(`${staff.toUpperCase()}: ${status}`, 60, yPos);
+          yPos += 12;
+          doc.fontSize(9).text(`  Verified by: ${verifiedBy}`, 70, yPos);
+          yPos += 12;
+          doc.text(`  Verified at: ${verifiedAt}`, 70, yPos);
+          yPos += 15;
+          doc.fontSize(10);
+        }
+      });
+      yPos += 10;
+
+      // Form Data Section
+      if (Object.keys(allFormData).length > 0) {
+        if (yPos > 700) {
+          doc.addPage();
+          yPos = 50;
+        }
+
+        doc.fontSize(14).font('Helvetica-Bold').text('Form Data', 50, yPos);
+        yPos += 20;
+        doc.moveTo(50, yPos).lineTo(545, yPos).stroke();
+        yPos += 15;
+
+        doc.fontSize(10).font('Helvetica');
+        const excludeFields = ['_id', '__v', 'createdAt', 'updatedAt', 'formId', 'serviceType', 'status', 'userId'];
+        
+        let fieldCount = 0;
+        for (const [key, value] of Object.entries(allFormData)) {
+          if (excludeFields.includes(key)) continue;
+          if (value === null || value === undefined || value === '') continue;
+          
+          if (yPos > 750) {
+            doc.addPage();
+            yPos = 50;
+          }
+
+          fieldCount++;
+          const fieldName = formatFieldName(key);
+          const fieldValue = formatValue(value);
+          
+          doc.font('Helvetica-Bold').fontSize(9).text(`${fieldName}:`, 60, yPos, { width: 180 });
+          doc.font('Helvetica').fontSize(9);
+          
+          const textHeight = doc.heightOfString(fieldValue, { width: 315 });
+          doc.text(fieldValue, 250, yPos, { width: 315 });
+          yPos += Math.max(textHeight, 14) + 5;
+
+          if (fieldCount > 150) {
+            doc.font('Helvetica-Italic').fontSize(9).text('... (Additional fields omitted for brevity)', 250, yPos);
+            break;
+          }
+        }
+      }
+
+      // Footer
+      doc.fontSize(8).fillColor('gray');
+      const footerY = doc.page.height - 30;
+      doc.text(
+        `Final Document Generated on ${new Date().toLocaleString()} | Generated by Staff4`,
+        50,
+        footerY,
+        { align: 'center' }
+      );
+
+      // Finalize PDF
+      doc.end();
+
+      // Log the action
+      await AuditLog.logAction({
+        userId: req.user.id,
+        userRole: req.user.role,
+        action: 'final_document_generated',
+        resource: 'staff4_final_document',
+        resourceId: formsDataDoc._id,
+        details: `Generated final document for form ${id}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+    } catch (error) {
+      logger.error('Error generating final document:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Error generating final document',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }

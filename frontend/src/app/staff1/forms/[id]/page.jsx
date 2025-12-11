@@ -191,8 +191,20 @@ export default function Staff1FormDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-gray-50 rounded-lg">
           <div>
             <h3 className="text-sm font-medium text-gray-500 mb-1">Submitted By</h3>
-            <p className="text-sm font-semibold text-gray-900">{form.userId?.name}</p>
-            <p className="text-xs text-gray-600">{form.userId?.email}</p>
+            {form.filledByStaff1 ? (
+              <>
+                <p className="text-sm font-semibold text-gray-900">Staff 1 (Filled on behalf)</p>
+                <p className="text-xs text-gray-600">{form.userId?.name || 'Offline User'}</p>
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mt-1">
+                  Filled by Staff 1
+                </span>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-gray-900">{form.userId?.name || 'N/A'}</p>
+                <p className="text-xs text-gray-600">{form.userId?.email || 'N/A'}</p>
+              </>
+            )}
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 mb-1">Service Type</h3>
@@ -272,7 +284,7 @@ export default function Staff1FormDetailPage() {
       <div className="bg-white rounded-lg border p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <Link
             href={`/staff1/forms/${form._id}/correct`}
             className="flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -281,16 +293,6 @@ export default function Staff1FormDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
             <span>Edit/Correct</span>
-          </Link>
-
-          <Link
-            href={`/staff1/stamp-calculation?formId=${form._id}`}
-            className="flex items-center justify-center space-x-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            <span>Calculate Stamp</span>
           </Link>
 
           <button

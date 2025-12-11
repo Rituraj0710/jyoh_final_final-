@@ -7,9 +7,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const staff4NavItems = [
   { href: "/staff4/dashboard", label: "Dashboard", icon: "🏠" },
-  { href: "/staff4/forms", label: "Cross Verification", icon: "🔍" },
-  { href: "/staff4/forms/pending", label: "Pending Review", icon: "⏳" },
-  { href: "/staff4/forms/verified", label: "Verified Forms", icon: "✅" },
+  { href: "/staff4/forms", label: "All Forms", icon: "📝" },
+  { href: "/staff4/final-document", label: "Final Document", icon: "📄" },
+  { href: "/staff4/delivery", label: "Delivery", icon: "📦" },
   { href: "/staff4/reports", label: "Verification Reports", icon: "📋" }
 ];
 
@@ -64,20 +64,24 @@ export default function Staff4Layout({ children }) {
 
           <nav className="mt-6 px-3">
             <div className="space-y-1">
-              {staff4NavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    pathname === item.href
-                      ? 'bg-purple-100 text-purple-700 border-r-2 border-purple-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <span className="mr-3 text-lg">{item.icon}</span>
-                  {item.label}
-                </Link>
-              ))}
+              {staff4NavItems.map((item) => {
+                const isActive = pathname === item.href || 
+                  (item.href !== '/staff4/dashboard' && pathname?.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      isActive
+                        ? 'bg-purple-100 text-purple-700 border-r-2 border-purple-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <span className="mr-3 text-lg">{item.icon}</span>
+                    {item.label}
+                  </Link>
+                );
+              })}
             </div>
           </nav>
 

@@ -1,7 +1,9 @@
+import mongoose from 'mongoose';
 import FormsData from '../models/FormsData.js';
 import StaffReport from '../models/StaffReport.js';
 import AuditLog from '../models/AuditLog.js';
 import logger from '../config/logger.js';
+import { generateFormattedFormId } from '../utils/formIdGenerator.js';
 
 class Staff2Controller {
   /**
@@ -771,6 +773,315 @@ class Staff2Controller {
       res.status(500).json({
         status: 'failed',
         message: 'Error retrieving work reports'
+      });
+    }
+  }
+
+  /**
+   * Submit E-Stamp Application
+   */
+  static async submitEStamp(req, res) {
+    try {
+      const userId = req.user.id;
+      
+      // Handle FormData - data comes as JSON string in 'data' field
+      let formData = {};
+      if (req.body.data) {
+        try {
+          formData = typeof req.body.data === 'string' ? JSON.parse(req.body.data) : req.body.data;
+        } catch (e) {
+          formData = req.body.data;
+        }
+      } else {
+        formData = req.body;
+      }
+
+      // Process uploaded files to Cloudinary if any
+      const { processMultipleFiles } = await import('../utils/fileUploadHelper.js');
+      const filesArray = req.files ? (Array.isArray(req.files) ? req.files : Object.values(req.files).flat()) : [];
+      const processedFiles = filesArray.length > 0 ? await processMultipleFiles(filesArray, 'e-stamp') : [];
+      const uploadedFilesData = processedFiles.map((file, index) => {
+        const originalFile = filesArray[index];
+        return {
+          fieldName: originalFile?.fieldname || 'document',
+          fileName: file.filename || originalFile?.originalname || 'document',
+          filePath: file.cloudinaryUrl || file.path,
+          fileSize: file.size || originalFile?.size || 0,
+          mimeType: file.contentType || originalFile?.mimetype || 'application/octet-stream',
+          uploadedAt: new Date()
+        };
+      });
+
+      // Generate formatted form ID
+      const eStampFormattedId = await generateFormattedFormId('e-stamp');
+      
+      const eStampForm = new FormsData({
+        formId: new mongoose.Types.ObjectId(),
+        formattedFormId: eStampFormattedId,
+        serviceType: 'e-stamp',
+        userId: userId,
+        status: 'submitted',
+        fields: formData,
+        data: formData,
+        rawFormData: formData,
+        formTitle: 'E-Stamp Application',
+        formDescription: 'E-Stamp Application submitted by Staff 2',
+        submittedAt: new Date(),
+        lastActivityBy: userId,
+        lastActivityAt: new Date(),
+        progressPercentage: 100,
+        uploadedFiles: uploadedFilesData,
+        approvals: {
+          staff2: {
+            approved: true,
+            verifiedBy: userId,
+            verifiedAt: new Date(),
+            status: 'approved',
+            notes: 'Submitted by Staff 2'
+          },
+          staff3: {
+            status: 'pending'
+          }
+        }
+      });
+
+      await eStampForm.save();
+
+      await AuditLog.logAction({
+        userId: userId,
+        userRole: req.user.role,
+        action: 'e_stamp_submitted',
+        resource: 'e_stamp',
+        resourceId: eStampForm._id,
+        details: 'E-Stamp Application submitted',
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        status: 'success',
+        message: 'E-Stamp Application submitted successfully',
+        data: { form: eStampForm }
+      });
+
+    } catch (error) {
+      logger.error('Error submitting E-Stamp:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: error.message || 'Error submitting E-Stamp Application'
+      });
+    }
+  }
+
+  /**
+   * Submit Map Module
+   */
+  static async submitMapModule(req, res) {
+    try {
+      const userId = req.user.id;
+      
+      // Handle FormData - data comes as JSON string in 'data' field
+      let formData = {};
+      if (req.body.data) {
+        try {
+          formData = typeof req.body.data === 'string' ? JSON.parse(req.body.data) : req.body.data;
+        } catch (e) {
+          formData = req.body.data;
+        }
+      } else {
+        formData = req.body;
+      }
+
+      // Process uploaded files to Cloudinary if any
+      const { processMultipleFiles } = await import('../utils/fileUploadHelper.js');
+      const filesArray = req.files ? (Array.isArray(req.files) ? req.files : Object.values(req.files).flat()) : [];
+      const processedFiles = filesArray.length > 0 ? await processMultipleFiles(filesArray, 'map-module') : [];
+      const uploadedFilesData = processedFiles.map((file, index) => {
+        const originalFile = filesArray[index];
+        return {
+          fieldName: originalFile?.fieldname || 'document',
+          fileName: file.filename || originalFile?.originalname || 'document',
+          filePath: file.cloudinaryUrl || file.path,
+          fileSize: file.size || originalFile?.size || 0,
+          mimeType: file.contentType || originalFile?.mimetype || 'application/octet-stream',
+          uploadedAt: new Date()
+        };
+      });
+
+      // Generate formatted form ID
+      const mapFormattedId = await generateFormattedFormId('map-module');
+      
+      const mapForm = new FormsData({
+        formId: new mongoose.Types.ObjectId(),
+        formattedFormId: mapFormattedId,
+        serviceType: 'map-module',
+        userId: userId,
+        status: 'submitted',
+        fields: formData,
+        data: formData,
+        rawFormData: formData,
+        formTitle: 'Property Map & Built-up Report',
+        formDescription: 'Map Module submitted by Staff 2',
+        submittedAt: new Date(),
+        lastActivityBy: userId,
+        lastActivityAt: new Date(),
+        progressPercentage: 100,
+        uploadedFiles: uploadedFilesData,
+        approvals: {
+          staff2: {
+            approved: true,
+            verifiedBy: userId,
+            verifiedAt: new Date(),
+            status: 'approved',
+            notes: 'Submitted by Staff 2'
+          },
+          staff3: {
+            status: 'pending'
+          }
+        }
+      });
+
+      await mapForm.save();
+
+      await AuditLog.logAction({
+        userId: userId,
+        userRole: req.user.role,
+        action: 'map_module_submitted',
+        resource: 'map_module',
+        resourceId: mapForm._id,
+        details: 'Map Module submitted',
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        status: 'success',
+        message: 'Map Module submitted successfully',
+        data: { form: mapForm }
+      });
+
+    } catch (error) {
+      logger.error('Error submitting Map Module:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: error.message || 'Error submitting Map Module'
+      });
+    }
+  }
+
+  /**
+   * Get forms pending final approval (verified by Staff 3, waiting for Staff 2 to mark as done)
+   */
+  static async getPendingFinalApproval(req, res) {
+    try {
+      const { page = 1, limit = 10, serviceType } = req.query;
+      const skip = (page - 1) * limit;
+
+      const query = {
+        $or: [
+          { serviceType: 'e-stamp' },
+          { serviceType: 'map-module' }
+        ],
+        'approvals.staff2.approved': true,
+        'approvals.staff3.approved': true,
+        status: { $ne: 'completed' }
+      };
+
+      if (serviceType) {
+        query.serviceType = serviceType;
+      }
+
+      const forms = await FormsData.find(query)
+        .populate('userId', 'name email')
+        .populate('approvals.staff2.verifiedBy', 'name email')
+        .populate('approvals.staff3.verifiedBy', 'name email')
+        .sort({ updatedAt: -1 })
+        .limit(parseInt(limit))
+        .skip(parseInt(skip));
+
+      const total = await FormsData.countDocuments(query);
+
+      res.json({
+        status: 'success',
+        data: {
+          forms,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            pages: Math.ceil(total / limit)
+          }
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error getting pending final approval forms:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: 'Error retrieving forms'
+      });
+    }
+  }
+
+  /**
+   * Mark form as final done
+   */
+  static async markAsFinalDone(req, res) {
+    try {
+      const { id } = req.params;
+      const { notes } = req.body;
+      const userId = req.user.id;
+
+      const form = await FormsData.findById(id);
+      if (!form) {
+        return res.status(404).json({
+          status: 'failed',
+          message: 'Form not found'
+        });
+      }
+
+      // Check if Staff 3 has verified
+      if (!form.approvals?.staff3?.approved) {
+        return res.status(400).json({
+          status: 'failed',
+          message: 'Form must be verified by Staff 3 before marking as final done'
+        });
+      }
+
+      // Update form status
+      form.status = 'completed';
+      form.completedAt = new Date();
+      form.lastActivityBy = userId;
+      form.lastActivityAt = new Date();
+      
+      if (notes) {
+        form.approvals.staff2.updateNotes = notes;
+      }
+
+      await form.save();
+
+      await AuditLog.logAction({
+        userId: userId,
+        userRole: req.user.role,
+        action: 'form_marked_final_done',
+        resource: form.serviceType,
+        resourceId: form._id,
+        details: `Form marked as final done: ${form.serviceType}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        status: 'success',
+        message: 'Form marked as final done successfully',
+        data: { form }
+      });
+
+    } catch (error) {
+      logger.error('Error marking form as final done:', error);
+      res.status(500).json({
+        status: 'failed',
+        message: error.message || 'Error marking form as final done'
       });
     }
   }

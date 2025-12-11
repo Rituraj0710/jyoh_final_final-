@@ -112,7 +112,7 @@ export default function Staff1FormsPage() {
       <div className="bg-white rounded-lg border p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Forms Review</h1>
         <p className="text-gray-600">
-          Review and verify submitted forms. You can edit, correct, and verify forms before they proceed to the next stage.
+          Review and edit forms submitted by users or filled by Staff 1. You can edit, correct, and review all forms.
         </p>
       </div>
 
@@ -257,8 +257,24 @@ export default function Staff1FormsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{form.userId?.name}</p>
-                        <p className="text-xs text-gray-500">{form.userId?.email}</p>
+                        {form.filledByStaff1 ? (
+                          <>
+                            <p className="text-sm font-medium text-gray-900">
+                              Staff 1 (Filled on behalf)
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {form.userId?.name || 'Offline User'}
+                            </p>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mt-1">
+                              Staff Filled
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-medium text-gray-900">{form.userId?.name || 'N/A'}</p>
+                            <p className="text-xs text-gray-500">{form.userId?.email || 'N/A'}</p>
+                          </>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -280,12 +296,6 @@ export default function Staff1FormsPage() {
                           className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
                         >
                           Edit
-                        </Link>
-                        <Link
-                          href={`/staff1/stamp-calculation?formId=${form._id}`}
-                          className="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors"
-                        >
-                          Stamp
                         </Link>
                       </div>
                     </td>

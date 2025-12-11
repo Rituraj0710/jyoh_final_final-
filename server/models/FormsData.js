@@ -10,13 +10,22 @@ const formsDataSchema = new mongoose.Schema({
   serviceType: {
     type: String,
     required: true,
-    enum: ['sale-deed', 'will-deed', 'trust-deed', 'property-registration', 'power-of-attorney', 'adoption-deed', 'property-sale-certificate'],
+    enum: ['sale-deed', 'will-deed', 'trust-deed', 'property-registration', 'power-of-attorney', 'adoption-deed', 'property-sale-certificate', 'e-stamp', 'map-module'],
     trim: true
+  },
+  formattedFormId: {
+    type: String,
+    unique: true,
+    sparse: true, // Allow null values but ensure uniqueness when present
+    trim: true,
+    // Format: YYYYMMDD + service code (2 letters) + sequential number (3 digits)
+    // Example: 20251211SD001
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User'
+    required: false, // Allow null for offline users filled by Staff 1
+    ref: 'User',
+    default: null
   },
   status: {
     type: String,
@@ -150,14 +159,6 @@ const formsDataSchema = new mongoose.Schema({
       lastUpdatedAt: { type: Date },
       updateNotes: { type: String }
     },
-    staff5: {
-      locked: { type: Boolean, default: false },
-      lockedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      lockedAt: { type: Date },
-      finalDecision: { type: String, enum: ['approved', 'rejected', null], default: null },
-      finalRemarks: { type: String },
-      status: { type: String, default: 'pending' }
-    }
   },
   // Audit trail for verifications/updates
   verificationHistory: [{
@@ -233,6 +234,106 @@ const formsDataSchema = new mongoose.Schema({
   lastActivityBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+  // Track if form was filled by Staff 1 on behalf of user
+  filledByStaff1: {
+    type: Boolean,
+    default: false
+  },
+  filledByStaff1Id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  filledByStaff1At: {
+    type: Date,
+    default: null
+  },
+  // Delivery management
+  delivery: {
+    // When form is ready for delivery (after Staff4 approval or completion)
+    readyForDeliveryAt: {
+      type: Date,
+      default: null
+    },
+    // User's delivery preference
+    userPreference: {
+      method: {
+        type: String,
+        enum: ['pickup', 'courier', 'email', 'postal', null],
+        default: null
+      },
+      selectedAt: {
+        type: Date,
+        default: null
+      },
+      deliveryAddress: {
+        type: String,
+        default: null
+      },
+      contactPhone: {
+        type: String,
+        default: null
+      },
+      email: {
+        type: String,
+        default: null
+      }
+    },
+    // Staff4's delivery decision
+    staff4Decision: {
+      method: {
+        type: String,
+        enum: ['pickup', 'courier', 'email', 'postal', null],
+        default: null
+      },
+      decidedAt: {
+        type: Date,
+        default: null
+      },
+      decidedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+      },
+      deliveryAddress: {
+        type: String,
+        default: null
+      },
+      contactPhone: {
+        type: String,
+        default: null
+      },
+      trackingNumber: {
+        type: String,
+        default: null
+      },
+      notes: {
+        type: String,
+        default: null
+      }
+    },
+    // Delivery status
+    status: {
+      type: String,
+      enum: ['pending_user_selection', 'user_selected', 'staff4_decided', 'dispatched', 'delivered', 'cancelled'],
+      default: 'pending_user_selection'
+    },
+    // Final delivery method (either user preference or staff4 decision)
+    finalMethod: {
+      type: String,
+      enum: ['pickup', 'courier', 'email', 'postal', null],
+      default: null
+    },
+    // Delivery dates
+    dispatchedAt: {
+      type: Date,
+      default: null
+    },
+    deliveredAt: {
+      type: Date,
+      default: null
+    }
   }
 }, {
   collection: 'forms_data',
@@ -242,6 +343,7 @@ const formsDataSchema = new mongoose.Schema({
 // Indexes for better query performance
 formsDataSchema.index({ userId: 1 });
 formsDataSchema.index({ serviceType: 1 });
+// formattedFormId already has an index from unique: true constraint
 formsDataSchema.index({ status: 1 });
 formsDataSchema.index({ assignedTo: 1 });
 formsDataSchema.index({ verifiedBy: 1 });
@@ -255,7 +357,6 @@ formsDataSchema.index({ 'approvals.staff1.approved': 1 });
 formsDataSchema.index({ 'approvals.staff2.approved': 1 });
 formsDataSchema.index({ 'approvals.staff3.approved': 1 });
 formsDataSchema.index({ 'approvals.staff4.approved': 1 });
-formsDataSchema.index({ 'approvals.staff5.locked': 1 });
 
 // Pre-save middleware to update lastActivityAt
 formsDataSchema.pre('save', function(next) {
@@ -299,9 +400,10 @@ formsDataSchema.methods.submitForm = function(fields, userId) {
   });
   
   this.fields = fields;
-  this.status = 'completed';
+  // Set status to 'submitted' to enter normal workflow (payment -> review -> approval)
+  // Only set to 'completed' after final approval
+  this.status = this.status === 'completed' ? 'completed' : 'submitted';
   this.submittedAt = new Date();
-  this.completedAt = new Date();
   this.lastActivityBy = userId;
   this.progressPercentage = 100;
   this.version += 1;

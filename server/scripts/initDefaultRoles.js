@@ -62,14 +62,6 @@ const initDefaultRoles = async () => {
         level: 6
       },
       {
-        name: 'staff5',
-        displayName: 'Final Approval & Lock',
-        description: 'Staff responsible for final approval and locking documents',
-        permissions: ['read', 'write', 'approve', 'lock', 'audit'],
-        isSystemRole: true,
-        level: 7
-      },
-      {
         name: 'admin',
         displayName: 'System Administrator',
         description: 'System Administrator - Full control over the system',

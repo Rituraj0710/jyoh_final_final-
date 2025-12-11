@@ -13,8 +13,9 @@ export default function Staff4FormsPage() {
     limit: 10,
     status: '',
     formType: '',
+    serviceType: '',
     search: '',
-    verificationStage: 'all' // 'all', 'staff1_complete', 'staff2_complete', 'staff3_complete'
+    verificationStage: 'all' // 'all', 'staff1_drafts', 'e_stamp', 'map_module', 'staff1_complete', 'staff2_complete', 'staff3_complete'
   });
   const [pagination, setPagination] = useState({});
   const { getAuthHeaders } = useAuth();
@@ -43,7 +44,16 @@ export default function Staff4FormsPage() {
       setLoading(true);
       const queryParams = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) queryParams.append(key, value);
+        if (value) {
+          // Map verificationStage to serviceType for specific document types
+          if (key === 'verificationStage' && value === 'e_stamp') {
+            queryParams.append('serviceType', 'e-stamp');
+          } else if (key === 'verificationStage' && value === 'map_module') {
+            queryParams.append('serviceType', 'map-module');
+          } else {
+            queryParams.append(key, value);
+          }
+        }
       });
 
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
@@ -53,13 +63,21 @@ export default function Staff4FormsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setForms(data.data.forms);
-        setPagination(data.data.pagination);
-        setError(null); // Clear any previous errors
+        if (data.status === 'success' && data.data) {
+          setForms(data.data.forms || []);
+          setPagination(data.data.pagination || {});
+          setError(null); // Clear any previous errors
+        } else {
+          throw new Error(data.message || 'Invalid response format');
+        }
       } else {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        const errorMessage = errorData.message || `HTTP ${response.status}: Failed to fetch forms`;
+        const errorData = await response.json().catch(() => ({ 
+          status: 'failed',
+          message: `HTTP ${response.status}: Failed to fetch forms` 
+        }));
+        const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: Failed to fetch forms`;
         console.error('API Error:', errorData);
+        console.error('Response status:', response.status);
         throw new Error(errorMessage);
       }
     } catch (error) {
@@ -130,25 +148,48 @@ export default function Staff4FormsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Cross-Verification Forms</h1>
-          <p className="text-gray-600">Review and verify all work completed by Staff1, Staff2, and Staff3</p>
+          <h1 className="text-2xl font-bold text-gray-900">Document Scanning & Verification</h1>
+          <p className="text-gray-600">Scan all documents: Staff 1 drafts, E-Stamp applications, Map Module documents, and all other forms</p>
         </div>
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Verification Stage</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Document Type</label>
               <select
                 value={filters.verificationStage}
                 onChange={(e) => handleFilterChange('verificationStage', e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
-                <option value="all">All Stages</option>
+                <option value="all">All Documents</option>
+                <option value="staff1_drafts">Staff 1 Drafts</option>
+                <option value="e_stamp">E-Stamp Applications</option>
+                <option value="map_module">Map Module Documents</option>
                 <option value="staff1_complete">Staff1 Complete</option>
                 <option value="staff2_complete">Staff2 Complete</option>
                 <option value="staff3_complete">Staff3 Complete</option>
                 <option value="all_complete">All Staff Complete</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+              <select
+                value={filters.serviceType}
+                onChange={(e) => handleFilterChange('serviceType', e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">All Services</option>
+                <option value="e-stamp">E-Stamp</option>
+                <option value="map-module">Map Module</option>
+                <option value="sale-deed">Sale Deed</option>
+                <option value="will-deed">Will Deed</option>
+                <option value="trust-deed">Trust Deed</option>
+                <option value="property-registration">Property Registration</option>
+                <option value="property-sale-certificate">Property Sale Certificate</option>
+                <option value="power-of-attorney">Power of Attorney</option>
+                <option value="adoption-deed">Adoption Deed</option>
               </select>
             </div>
             
@@ -160,10 +201,12 @@ export default function Staff4FormsPage() {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="">All Status</option>
-                <option value="pending_cross_verification">Pending Cross Verification</option>
+                <option value="draft">Draft</option>
+                <option value="submitted">Submitted</option>
+                <option value="under_review">Under Review</option>
                 <option value="cross_verified">Cross Verified</option>
                 <option value="needs_correction">Needs Correction</option>
-                <option value="under_review">Under Review</option>
+                <option value="completed">Completed</option>
               </select>
             </div>
 
@@ -199,7 +242,7 @@ export default function Staff4FormsPage() {
         {/* Forms List */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Forms for Cross-Verification ({pagination.total || 0})</h2>
+            <h2 className="text-lg font-medium text-gray-900">All Documents ({pagination.total || 0})</h2>
           </div>
 
           {error && (
@@ -222,10 +265,16 @@ export default function Staff4FormsPage() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         <h3 className="text-sm font-medium text-gray-900">
-                          {form.formType?.replace(/_/g, ' ').toUpperCase() || 'FORM'}
+                          {form.serviceType?.replace(/-/g, ' ').replace(/_/g, ' ').toUpperCase() || form.formType?.replace(/_/g, ' ').toUpperCase() || 'FORM'}
                         </h3>
                         {getStatusBadge(form.status)}
                         {getVerificationStageBadge(form)}
+                        {form.serviceType === 'e-stamp' && (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">E-Stamp</span>
+                        )}
+                        {form.serviceType === 'map-module' && (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Map Module</span>
+                        )}
                       </div>
                       
                       <div className="mt-2 text-sm text-gray-500">
@@ -264,6 +313,60 @@ export default function Staff4FormsPage() {
                       {form.data && (
                         <div className="mt-3 text-sm">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* E-Stamp specific fields */}
+                            {form.serviceType === 'e-stamp' && (
+                              <>
+                                {form.data.article && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Article:</span>
+                                    <span className="ml-2 text-gray-600">{form.data.article}</span>
+                                  </div>
+                                )}
+                                {form.data.amount && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Amount:</span>
+                                    <span className="ml-2 text-gray-600">₹{form.data.amount}</span>
+                                  </div>
+                                )}
+                                {form.data.f_name && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">First Party:</span>
+                                    <span className="ml-2 text-gray-600">{form.data.f_name}</span>
+                                  </div>
+                                )}
+                                {form.data.s_name && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Second Party:</span>
+                                    <span className="ml-2 text-gray-600">{form.data.s_name}</span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            
+                            {/* Map Module specific fields */}
+                            {form.serviceType === 'map-module' && (
+                              <>
+                                {form.data.propertyType && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Property Type:</span>
+                                    <span className="ml-2 text-gray-600">{form.data.propertyType}</span>
+                                  </div>
+                                )}
+                                {form.data.propertyAddress && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Address:</span>
+                                    <span className="ml-2 text-gray-600">{form.data.propertyAddress}</span>
+                                  </div>
+                                )}
+                                {form.data.plotLength && form.data.plotWidth && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Plot Size:</span>
+                                    <span className="ml-2 text-gray-600">{form.data.plotLength} × {form.data.plotWidth}</span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            
                             {/* Primary Details (Staff1) */}
                             {form.data.applicantName && (
                               <div>

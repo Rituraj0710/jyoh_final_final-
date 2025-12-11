@@ -66,33 +66,6 @@ export default function Staff1Dashboard() {
       link: "/staff1/forms?status=submitted"
     },
     {
-      title: "Forms Corrected",
-      value: stats.formsCorrected,
-      icon: "✏️",
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-700",
-      borderColor: "border-blue-200",
-      link: "/staff1/forms?status=corrected"
-    },
-    {
-      title: "Forms Verified",
-      value: stats.formsVerified,
-      icon: "✅",
-      bgColor: "bg-green-50",
-      textColor: "text-green-700",
-      borderColor: "border-green-200",
-      link: "/staff1/forms?status=verified"
-    },
-    {
-      title: "Stamp Calculations",
-      value: stats.stampCalculations,
-      icon: "🧮",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-700",
-      borderColor: "border-purple-200",
-      link: "/staff1/stamp-calculation"
-    },
-    {
       title: "Work Reports",
       value: stats.workReportsSubmitted,
       icon: "📋",
@@ -100,6 +73,15 @@ export default function Staff1Dashboard() {
       textColor: "text-indigo-700",
       borderColor: "border-indigo-200",
       link: "/staff1/work-report"
+    },
+    {
+      title: "Drafting",
+      value: "New",
+      icon: "📝",
+      bgColor: "bg-green-50",
+      textColor: "text-green-700",
+      borderColor: "border-green-200",
+      link: "/staff1/drafting"
     }
   ];
 
@@ -245,7 +227,7 @@ export default function Staff1Dashboard() {
       {/* Quick Actions */}
       <div className="bg-white rounded-lg border p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link 
             href="/staff1/forms?status=submitted"
             className="flex items-center space-x-3 p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
@@ -258,17 +240,6 @@ export default function Staff1Dashboard() {
           </Link>
           
           <Link 
-            href="/staff1/stamp-calculation"
-            className="flex items-center space-x-3 p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-          >
-            <span className="text-2xl">🧮</span>
-            <div>
-              <p className="font-medium text-gray-900">Calculate Stamp</p>
-              <p className="text-sm text-gray-600">Stamp duty calculator</p>
-            </div>
-          </Link>
-          
-          <Link 
             href="/staff1/work-report"
             className="flex items-center space-x-3 p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
           >
@@ -276,6 +247,17 @@ export default function Staff1Dashboard() {
             <div>
               <p className="font-medium text-gray-900">Submit Report</p>
               <p className="text-sm text-gray-600">Daily work report</p>
+            </div>
+          </Link>
+          
+          <Link 
+            href="/staff1/drafting"
+            className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+          >
+            <span className="text-2xl">📝</span>
+            <div>
+              <p className="font-medium text-gray-900">Create Draft</p>
+              <p className="text-sm text-gray-600">Draft forms with pre-filled data</p>
             </div>
           </Link>
           

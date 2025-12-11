@@ -7,10 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const staff1NavItems = [
   { href: "/staff1/dashboard", label: "Dashboard", icon: "🏠" },
+  { href: "/staff1/fill-forms", label: "Fill Forms", icon: "📋" },
   { href: "/staff1/forms", label: "Forms Review", icon: "📝" },
-  { href: "/staff1/forms/correction", label: "Form Correction", icon: "✏️" },
-  { href: "/staff1/forms/verification", label: "Form Verification", icon: "✅" },
-  { href: "/staff1/stamp-calculation", label: "Stamp Calculation", icon: "🧮" },
   { href: "/staff1/work-report", label: "Work Report", icon: "📋" }
 ];
 

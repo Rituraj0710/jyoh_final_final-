@@ -1131,6 +1131,100 @@ class UserController {
       logger.error('Error logging activity:', error);
     }
   }
+
+  // Get forms ready for delivery preference selection
+  static getDeliveryForms = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { page = 1, limit = 10 } = req.query;
+      const skip = (page - 1) * limit;
+
+      // Find forms that are completed/cross-verified and ready for delivery
+      const query = {
+        userId: userId,
+        $or: [
+          { 'approvals.staff4.approved': true },
+          { status: 'cross_verified' },
+          { status: 'completed' }
+        ],
+        'delivery.status': { $in: ['pending_user_selection', 'user_selected'] }
+      };
+
+      const forms = await FormsData.find(query)
+        .sort({ 'delivery.readyForDeliveryAt': -1, createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const total = await FormsData.countDocuments(query);
+
+      return successResponse(res, 'Delivery forms retrieved successfully', {
+        forms,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    } catch (error) {
+      logger.error('Error getting delivery forms:', error);
+      return errorResponse(res, 'Error retrieving delivery forms', error.message, 500);
+    }
+  };
+
+  // Set user delivery preference
+  static setDeliveryPreference = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const { method, deliveryAddress, contactPhone, email } = req.body;
+
+      if (!method || !['pickup', 'courier', 'email', 'postal'].includes(method)) {
+        return errorResponse(res, 'Valid delivery method is required', null, 400);
+      }
+
+      const form = await FormsData.findById(id);
+      if (!form) {
+        return errorResponse(res, 'Form not found', null, 404);
+      }
+
+      // Check if user owns this form
+      if (form.userId.toString() !== userId) {
+        return errorResponse(res, 'Access denied', null, 403);
+      }
+
+      // Check if form is ready for delivery
+      if (!form.delivery || !['pending_user_selection', 'user_selected'].includes(form.delivery.status)) {
+        return errorResponse(res, 'Form is not ready for delivery preference selection', null, 400);
+      }
+
+      // Update delivery preference
+      form.delivery = form.delivery || {};
+      form.delivery.userPreference = {
+        method,
+        selectedAt: new Date(),
+        deliveryAddress: deliveryAddress || null,
+        contactPhone: contactPhone || null,
+        email: email || null
+      };
+      form.delivery.finalMethod = method;
+      form.delivery.status = 'user_selected';
+
+      // If readyForDeliveryAt is not set, set it now
+      if (!form.delivery.readyForDeliveryAt) {
+        form.delivery.readyForDeliveryAt = new Date();
+      }
+
+      await form.save();
+
+      await this.logActivity('Delivery Preference Set', userId, req.user.role, 'Success', `Method: ${method}`);
+
+      return successResponse(res, 'Delivery preference set successfully', { form });
+    } catch (error) {
+      logger.error('Error setting delivery preference:', error);
+      return errorResponse(res, 'Error setting delivery preference', error.message, 500);
+    }
+  };
 }
 
 export default UserController;

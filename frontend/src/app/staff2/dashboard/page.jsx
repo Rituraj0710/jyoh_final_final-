@@ -57,27 +57,6 @@ export default function Staff2Dashboard() {
 
   const dashboardCards = [
     {
-      title: 'Pending Trustee Verification',
-      value: stats.pendingTrusteeVerification,
-      icon: '👤',
-      color: 'blue',
-      href: '/staff2/forms'
-    },
-    {
-      title: 'Pending Amount Verification',
-      value: stats.pendingAmountVerification,
-      icon: '💰',
-      color: 'yellow',
-      href: '/staff2/forms/amount-verification'
-    },
-    {
-      title: 'Completed Verifications',
-      value: stats.completedVerifications,
-      icon: '✅',
-      color: 'green',
-      href: '/staff2/forms/completed'
-    },
-    {
       title: 'Forms Corrected',
       value: stats.formsCorrected,
       icon: '✏️',
@@ -97,6 +76,27 @@ export default function Staff2Dashboard() {
       icon: '📅',
       color: 'pink',
       href: '/staff2/forms'
+    },
+    {
+      title: 'E-Stamp Application',
+      value: 'New',
+      icon: '📄',
+      color: 'blue',
+      href: '/staff2/e-stamp'
+    },
+    {
+      title: 'Map Module',
+      value: 'New',
+      icon: '🗺️',
+      color: 'blue',
+      href: '/staff2/map-module'
+    },
+    {
+      title: 'Final Approval',
+      value: 'Pending',
+      icon: '✅',
+      color: 'green',
+      href: '/staff2/final-approval'
     }
   ];
 
@@ -195,25 +195,25 @@ export default function Staff2Dashboard() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
               <Link
-                href="/staff2/forms"
-                className="flex items-center p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
-              >
-                <span className="text-green-600 mr-3">👤</span>
-                <span className="text-sm font-medium text-gray-900">Start Trustee Verification</span>
-              </Link>
-              <Link
-                href="/staff2/forms/amount-verification"
-                className="flex items-center p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors"
-              >
-                <span className="text-yellow-600 mr-3">💰</span>
-                <span className="text-sm font-medium text-gray-900">Verify Amount Details</span>
-              </Link>
-              <Link
                 href="/staff2/work-report"
                 className="flex items-center p-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
               >
                 <span className="text-indigo-600 mr-3">📋</span>
                 <span className="text-sm font-medium text-gray-900">Submit Work Report</span>
+              </Link>
+              <Link
+                href="/staff2/e-stamp"
+                className="flex items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+              >
+                <span className="text-blue-600 mr-3">📄</span>
+                <span className="text-sm font-medium text-gray-900">E-Stamp Application</span>
+              </Link>
+              <Link
+                href="/staff2/map-module"
+                className="flex items-center p-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+              >
+                <span className="text-indigo-600 mr-3">🗺️</span>
+                <span className="text-sm font-medium text-gray-900">Map Module</span>
               </Link>
             </div>
           </div>
@@ -303,6 +303,30 @@ export default function Staff2Dashboard() {
                   Generate detailed work reports for completed verifications.
                 </p>
               </div>
+
+              <Link href="/staff2/e-stamp" className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all">
+                <div className="flex items-center mb-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span className="text-blue-600 text-sm">📄</span>
+                  </div>
+                  <h3 className="ml-3 text-sm font-medium text-gray-900">E-Stamp Application</h3>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Create and submit e-stamp applications with property and party details.
+                </p>
+              </Link>
+
+              <Link href="/staff2/map-module" className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all">
+                <div className="flex items-center mb-3">
+                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <span className="text-indigo-600 text-sm">🗺️</span>
+                  </div>
+                  <h3 className="ml-3 text-sm font-medium text-gray-900">Map Module</h3>
+                </div>
+                <p className="text-xs text-gray-600">
+                  Generate detailed property maps and built-up area reports with visual diagrams.
+                </p>
+              </Link>
             </div>
           </div>
         </div>

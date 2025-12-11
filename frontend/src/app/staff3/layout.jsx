@@ -7,10 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const staff3NavItems = [
   { href: "/staff3/dashboard", label: "Dashboard", icon: "🏠" },
-  { href: "/staff3/forms", label: "Land Verification", icon: "🏞️" },
-  { href: "/staff3/forms/plot-details", label: "Plot Details", icon: "📐" },
-  { href: "/staff3/map-forms", label: "Map Module Forms", icon: "🗺️" },
-  { href: "/staff3/forms/completed", label: "Completed Verifications", icon: "✅" },
+  { href: "/staff3/e-stamp-map-verification", label: "E-Stamp & Map Module", icon: "📋" },
   { href: "/staff3/work-report", label: "Work Report", icon: "📋" }
 ];
 
@@ -92,7 +89,7 @@ export default function Staff3Layout({ children }) {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-900">{user?.name || 'Staff3 User'}</p>
-                <p className="text-xs text-yellow-600">Land/Plot Details Verification</p>
+                <p className="text-xs text-yellow-600">E-Stamp & Map Module Verification</p>
               </div>
             </div>
             <button
@@ -128,7 +125,7 @@ export default function Staff3Layout({ children }) {
                   </svg>
                 </button>
                 <h2 className="ml-2 text-lg font-semibold text-gray-900">
-                  Land/Plot Details Verification
+                  E-Stamp & Map Module Verification
                 </h2>
               </div>
               

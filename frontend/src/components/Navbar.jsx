@@ -375,6 +375,7 @@ import Loading from "./Loading";
 import Cookies from "js-cookie";
 import Avatar from "./ui/Avatar";
 import AgentAvatar from "./ui/AgentAvatar";
+import { AVAILABLE_FORMS } from "@/lib/constants/forms";
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -468,41 +469,16 @@ const Navbar = () => {
                     tabIndex={0}
                     className="dropdown-content menu p-3 shadow-xl bg-slate-800 border border-slate-600 rounded-lg w-64 mt-2 absolute z-50"
                   >
-                    <li>
-                      <Link href={"/will-deed"} className="text-slate-200 hover:text-amber-400 hover:bg-slate-700 rounded-md px-3 py-2 transition-all duration-200">
-                        {"Will Deed Form"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href={"/sale-deed"} className="text-slate-200 hover:text-amber-400 hover:bg-slate-700 rounded-md px-3 py-2 transition-all duration-200">
-                        {"Sale Deed Form"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href={"/trust-deed"} className="text-slate-200 hover:text-amber-400 hover:bg-slate-700 rounded-md px-3 py-2 transition-all duration-200">
-                        {"Trust Deed Form"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href={"/property-registration"} className="text-slate-200 hover:text-amber-400 hover:bg-slate-700 rounded-md px-3 py-2 transition-all duration-200">
-                        {"Property Registration Form"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href={"/property-sale-certificate"} className="text-slate-200 hover:text-amber-400 hover:bg-slate-700 rounded-md px-3 py-2 transition-all duration-200">
-                        {"Property Sale Certificate Generator"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href={"/power-of-attorney"} className="text-slate-200 hover:text-amber-400 hover:bg-slate-700 rounded-md px-3 py-2 transition-all duration-200">
-                        {"Power of Attorney Form"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href={"/adoption-deed"} className="text-slate-200 hover:text-amber-400 hover:bg-slate-700 rounded-md px-3 py-2 transition-all duration-200">
-                        {"Adoption Deed Form"}
-                      </Link>
-                    </li>
+                    {AVAILABLE_FORMS.map((form, index) => (
+                      <li key={index}>
+                        <Link 
+                          href={form.path} 
+                          className="text-slate-200 hover:text-amber-400 hover:bg-slate-700 rounded-md px-3 py-2 transition-all duration-200"
+                        >
+                          {form.displayName}
+                        </Link>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
@@ -757,97 +733,21 @@ const Navbar = () => {
                     tabIndex={0}
                     className="menu p-3 shadow-xl bg-slate-700 border border-slate-600 rounded-lg w-full mt-2 space-y-1"
                   >
-                    <li>
-                      <Link
-                        href={"/will-deed"}
-                        onClick={() =>
-                          (document.getElementById(
-                            "navbar-drawer"
-                          ).checked = false)
-                        }
-                        className="text-slate-200 hover:text-amber-400 hover:bg-slate-600 rounded-md px-3 py-2 transition-all duration-200"
-                      >
-                        {"Will Deed Form"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={"/sale-deed"}
-                        onClick={() =>
-                          (document.getElementById(
-                            "navbar-drawer"
-                          ).checked = false)
-                        }
-                        className="text-slate-200 hover:text-amber-400 hover:bg-slate-600 rounded-md px-3 py-2 transition-all duration-200"
-                      >
-                        {"Sale Deed"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={"/trust-deed"}
-                        onClick={() =>
-                          (document.getElementById(
-                            "navbar-drawer"
-                          ).checked = false)
-                        }
-                        className="text-slate-200 hover:text-amber-400 hover:bg-slate-600 rounded-md px-3 py-2 transition-all duration-200"
-                      >
-                        {"Trust Deed Form"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={"/property-registration"}
-                        onClick={() =>
-                          (document.getElementById(
-                            "navbar-drawer"
-                          ).checked = false)
-                        }
-                        className="text-slate-200 hover:text-amber-400 hover:bg-slate-600 rounded-md px-3 py-2 transition-all duration-200"
-                      >
-                        {"Property Registration Form"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={"/property-sale-certificate"}
-                        onClick={() =>
-                          (document.getElementById(
-                            "navbar-drawer"
-                          ).checked = false)
-                        }
-                        className="text-slate-200 hover:text-amber-400 hover:bg-slate-600 rounded-md px-3 py-2 transition-all duration-200"
-                      >
-                        {"Property Sale Certificate Generator"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={"/power-of-attorney"}
-                        onClick={() =>
-                          (document.getElementById(
-                            "navbar-drawer"
-                          ).checked = false)
-                        }
-                        className="text-slate-200 hover:text-amber-400 hover:bg-slate-600 rounded-md px-3 py-2 transition-all duration-200"
-                      >
-                        {"Power of Attorney Form"}
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href={"/adoption-deed"}
-                        onClick={() =>
-                          (document.getElementById(
-                            "navbar-drawer"
-                          ).checked = false)
-                        }
-                        className="text-slate-200 hover:text-amber-400 hover:bg-slate-600 rounded-md px-3 py-2 transition-all duration-200"
-                      >
-                        {"Adoption Deed Form"}
-                      </Link>
-                    </li>
+                    {AVAILABLE_FORMS.map((form, index) => (
+                      <li key={index}>
+                        <Link
+                          href={form.path}
+                          onClick={() =>
+                            (document.getElementById(
+                              "navbar-drawer"
+                            ).checked = false)
+                          }
+                          className="text-slate-200 hover:text-amber-400 hover:bg-slate-600 rounded-md px-3 py-2 transition-all duration-200"
+                        >
+                          {form.displayName}
+                        </Link>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>

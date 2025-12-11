@@ -118,8 +118,32 @@ export const FormWorkflowProvider = ({ children, formType }) => {
       // Get authentication token
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       
+      // Check if Staff 1 is filling the form on behalf of a user
+      const isStaff1Filling = typeof window !== 'undefined' && sessionStorage.getItem('staff1_filling_form') === 'true';
+      const onBehalfOfUserId = typeof window !== 'undefined' ? sessionStorage.getItem('staff1_onBehalfOfUserId') || null : null;
+      const userRole = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+      
       // Submit form data directly to backend
       const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4001';
+      
+      // Determine endpoint - use Staff 1 endpoint if Staff 1 is filling, otherwise use legacy endpoints
+      let endpoint;
+      if (isStaff1Filling && userRole === 'staff1') {
+        // Use Staff 1 endpoint for submitting on behalf of users
+        endpoint = '/api/staff/1/forms/submit';
+      } else {
+        // Use legacy endpoints for regular users
+        const endpoints = {
+          'will-deed': '/api/will-deed',
+          'sale-deed': '/api/sale-deed',
+          'trust-deed': '/api/trust-deed',
+          'property-registration': '/api/property-registration',
+          'property-sale-certificate': '/api/property-sale-certificate',
+          'power-of-attorney': '/api/power-of-attorney',
+          'adoption-deed': '/api/adoption-deed'
+        };
+        endpoint = endpoints[formType] || '/api/form';
+      }
       
       // For sale-deed, we need to convert JSON to FormData format
       let body;
@@ -242,6 +266,12 @@ export const FormWorkflowProvider = ({ children, formType }) => {
           body.append('calculations', JSON.stringify(dataForJson.calculations));
         }
         
+        // If Staff 1 is filling, add onBehalfOfUserId
+        if (isStaff1Filling) {
+          body.append('onBehalfOfUserId', onBehalfOfUserId || '');
+          body.append('serviceType', formType);
+        }
+        
         // Append all files with correct field names
         filesToAppend.forEach(({ fieldname, file }) => {
           body.append(fieldname, file);
@@ -249,7 +279,17 @@ export const FormWorkflowProvider = ({ children, formType }) => {
       } else {
         // For other forms, use JSON
         headers['Content-Type'] = 'application/json';
-        body = JSON.stringify(data);
+        
+        // Prepare JSON body
+        const jsonData = { ...data };
+        
+        // If Staff 1 is filling, add onBehalfOfUserId and serviceType
+        if (isStaff1Filling) {
+          jsonData.onBehalfOfUserId = onBehalfOfUserId || null;
+          jsonData.serviceType = formType;
+        }
+        
+        body = JSON.stringify(jsonData);
       }
       
       // Add authorization header if token exists

@@ -14,26 +14,19 @@ class Staff1Controller {
       const { page = 1, limit = 10, status, serviceType, search } = req.query;
       const skip = (page - 1) * limit;
 
-      // Staff1 can see forms that are submitted and not yet processed by staff1
+      // Staff1 can see all submitted forms (by users or filled by Staff1 itself)
       // Include forms from both FormsData and legacy collections
       let query = {
         $or: [
-          { status: { $in: ['submitted', 'in-progress', 'completed'] } },
-          { status: { $exists: false } } // For legacy forms without status
+          { status: { $in: ['submitted', 'in-progress', 'under_review', 'completed'] } },
+          { status: { $exists: false } }, // For legacy forms without status
+          // Include forms filled by Staff1 regardless of status
+          { filledByStaff1: true }
         ]
       };
 
-      // Add additional filters for Staff1 - only unprocessed forms
-      const staff1Query = {
-        $or: [
-          { 'approvals.staff1.approved': false },
-          { 'approvals.staff1.approved': { $exists: false } },
-          { assignedTo: null },
-          { assignedTo: { $exists: false } }
-        ]
-      };
-
-      query = { $and: [query, staff1Query] };
+      // Staff1 can review and edit all forms - no restriction on approval status
+      // This allows Staff1 to see forms submitted by users and forms it filled itself
 
       if (status) {
         query.status = status;
@@ -248,10 +241,10 @@ class Staff1Controller {
         return errorResponse(res, 'Form not found', null, 404);
       }
 
-      // Check if Staff1 can access this form
-      if (formsDataDoc.approvals?.staff1?.approved) {
-        return errorResponse(res, 'Form already verified by Staff1', null, 403);
-      }
+      // Staff1 can access all forms for review and editing, including:
+      // - Forms submitted by users
+      // - Forms filled by Staff1 itself
+      // - Forms already verified by Staff1 (for review/editing purposes)
 
       // Fetch original form data from the dedicated collection
       let originalFormData = null;
@@ -344,10 +337,8 @@ class Staff1Controller {
           return errorResponse(res, 'Form not found', null, 404);
         }
 
-        // Check if Staff1 can edit this form
-        if (form.verifiedBy && form.verifiedBy.toString() !== req.user.id) {
-          return errorResponse(res, 'Form already verified by another staff member', null, 403);
-        }
+        // Staff1 can edit all forms it can see - both user-submitted and Staff1-filled forms
+        // No restrictions on editing - Staff1 has full access to review and edit all forms
 
         // Store original data for audit trail
         originalFields = { ...form.fields, ...form.data };
@@ -988,6 +979,45 @@ class Staff1Controller {
     } catch (error) {
       logger.error('Error getting dashboard stats:', error);
       return errorResponse(res, 'Error retrieving dashboard statistics', error.message, 500);
+    }
+  };
+
+  /**
+   * Submit form on behalf of user (for offline users)
+   * Staff 1 can fill forms on behalf of users when they come offline
+   */
+  static submitFormOnBehalf = async (req, res) => {
+    try {
+      const { formId, serviceType, fields, formTitle, formDescription, onBehalfOfUserId } = req.body;
+      const staff1Id = req.user.id;
+
+      // Validate required fields
+      if (!serviceType || !fields) {
+        return errorResponse(res, 'Service type and fields are required', null, 400);
+      }
+
+      // Import FormsDataController to use its submitForm logic
+      const FormsDataController = (await import('./formsDataController.js')).default;
+      
+      // Create a modified request object to pass to submitForm
+      const modifiedReq = {
+        ...req,
+        body: {
+          formId,
+          serviceType,
+          fields,
+          formTitle,
+          formDescription,
+          onBehalfOfUserId: onBehalfOfUserId || null // null for offline users
+        },
+        files: req.files
+      };
+
+      // Call the submitForm method
+      return await FormsDataController.submitForm(modifiedReq, res);
+    } catch (error) {
+      logger.error('Error submitting form on behalf of user:', error);
+      return errorResponse(res, 'Error submitting form on behalf of user', error.message, 500);
     }
   };
 }

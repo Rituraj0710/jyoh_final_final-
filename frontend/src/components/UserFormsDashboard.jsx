@@ -125,12 +125,20 @@ const UserFormsDashboard = () => {
               Manage and track your submitted forms
             </p>
           </div>
-          <Link
-            href="/contact-form"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
-          >
-            Create New Form
-          </Link>
+          <div className="flex items-center space-x-3">
+            <Link
+              href="/user/delivery"
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+            >
+              📦 Delivery Preferences
+            </Link>
+            <Link
+              href="/contact-form"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+            >
+              Create New Form
+            </Link>
+          </div>
         </div>
       </div>
 

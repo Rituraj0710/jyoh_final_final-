@@ -35,7 +35,8 @@ export default function Staff3FormDetailPage() {
         const data = await response.json();
         setForm(data.data.form);
         // Use allFields which contains merged data from FormsData and original collection
-        const formFields = data.data.form.allFields || data.data.form.data || {};
+        // Deep clone to avoid reference issues
+        const formFields = JSON.parse(JSON.stringify(data.data.form.allFields || data.data.form.data || {}));
         setEditableFields(formFields);
       } else {
         throw new Error('Failed to fetch form details');
@@ -49,10 +50,27 @@ export default function Staff3FormDetailPage() {
   };
 
   const handleFieldChange = (field, value) => {
-    setEditableFields(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setEditableFields(prev => {
+      // Handle nested fields (e.g., firstParty.name, secondParty.name)
+      if (field.includes('.')) {
+        const parts = field.split('.');
+        if (parts.length === 2) {
+          const [parent, child] = parts;
+          return {
+            ...prev,
+            [parent]: {
+              ...(prev[parent] || {}),
+              [child]: value
+            }
+          };
+        }
+      }
+      // Handle direct field updates
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
   };
 
   const handleVerification = async (approved) => {
@@ -73,7 +91,12 @@ export default function Staff3FormDetailPage() {
       if (response.ok) {
         const data = await response.json();
         alert(data.message || 'Verification completed successfully');
-        router.push('/staff3/forms');
+        // Redirect based on form type
+        if (form?.serviceType === 'e-stamp' || form?.serviceType === 'map-module') {
+          router.push('/staff3/e-stamp-map-verification');
+        } else {
+          router.push('/staff3/forms');
+        }
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Verification failed');
@@ -104,7 +127,7 @@ export default function Staff3FormDetailPage() {
         const data = await response.json();
         alert(data.message || 'Changes saved successfully');
         setIsEditing(false);
-        fetchFormDetails(); // Refresh form data
+        await fetchFormDetails(); // Refresh form data
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to save changes');
@@ -636,6 +659,197 @@ export default function Staff3FormDetailPage() {
                           />
                         ) : (
                           <p className="text-sm text-gray-900">{form.data?.plotBoundaries || 'Not provided'}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* E-Stamp Application Fields */}
+                {form?.serviceType === 'e-stamp' && (
+                  <div className="space-y-6 mb-8">
+                    <h3 className="text-lg font-medium text-gray-900">E-Stamp Application Details</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Article/Type</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.article || form?.data?.article || ''}
+                            onChange={(e) => handleFieldChange('article', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.article || form?.data?.article || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Property Description</label>
+                        {isEditing ? (
+                          <textarea
+                            value={editableFields.property || form?.data?.property || ''}
+                            onChange={(e) => handleFieldChange('property', e.target.value)}
+                            rows={2}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.property || form?.data?.property || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Considered Price (₹)</label>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editableFields.consideredPrice || form?.data?.consideredPrice || ''}
+                            onChange={(e) => handleFieldChange('consideredPrice', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">₹{editableFields.consideredPrice || form?.data?.consideredPrice || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Amount (₹)</label>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editableFields.amount || form?.data?.amount || ''}
+                            onChange={(e) => handleFieldChange('amount', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">₹{editableFields.amount || form?.data?.amount || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">First Party Name</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.firstParty?.name || form?.data?.firstParty?.name || ''}
+                            onChange={(e) => handleFieldChange('firstParty.name', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.firstParty?.name || form?.data?.firstParty?.name || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Second Party Name</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.secondParty?.name || form?.data?.secondParty?.name || ''}
+                            onChange={(e) => handleFieldChange('secondParty.name', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.secondParty?.name || form?.data?.secondParty?.name || 'Not provided'}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Map Module Fields */}
+                {form?.serviceType === 'map-module' && (
+                  <div className="space-y-6 mb-8">
+                    <h3 className="text-lg font-medium text-gray-900">Map Module Details</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
+                        {isEditing ? (
+                          <select
+                            value={editableFields.propertyType || form?.data?.propertyType || ''}
+                            onChange={(e) => handleFieldChange('propertyType', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          >
+                            <option value="">Select Property Type</option>
+                            <option value="Residential">Residential</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Industrial">Industrial</option>
+                            <option value="Agriculture">Agriculture</option>
+                          </select>
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.propertyType || form?.data?.propertyType || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Property Sub-Type</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editableFields.propertySubType || form?.data?.propertySubType || ''}
+                            onChange={(e) => handleFieldChange('propertySubType', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.propertySubType || form?.data?.propertySubType || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Property Address</label>
+                        {isEditing ? (
+                          <textarea
+                            value={editableFields.propertyAddress || form?.data?.propertyAddress || ''}
+                            onChange={(e) => handleFieldChange('propertyAddress', e.target.value)}
+                            rows={2}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.propertyAddress || form?.data?.propertyAddress || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Plot Length</label>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editableFields.plotLength || form?.data?.plotLength || ''}
+                            onChange={(e) => handleFieldChange('plotLength', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.plotLength || form?.data?.plotLength || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Plot Width</label>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editableFields.plotWidth || form?.data?.plotWidth || ''}
+                            onChange={(e) => handleFieldChange('plotWidth', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.plotWidth || form?.data?.plotWidth || 'Not provided'}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Vicinity Radius (Sq. Mtr.)</label>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editableFields.vicinityRadius || form?.data?.vicinityRadius || ''}
+                            onChange={(e) => handleFieldChange('vicinityRadius', e.target.value)}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{editableFields.vicinityRadius || form?.data?.vicinityRadius || 'Not provided'} sq. mtr.</p>
                         )}
                       </div>
                     </div>

@@ -17,6 +17,7 @@ router.get('/dashboard-stats', authLimiter, Staff3Controller.getDashboardStats);
 router.get('/forms', authLimiter, Staff3Controller.getForms);
 router.get('/forms/:id', authLimiter, Staff3Controller.getFormById);
 router.put('/forms/:id/verify', authLimiter, Staff3Controller.verifyForm);
+router.put('/forms/:id/verify-delivery', authLimiter, Staff3Controller.verifyDelivery);
 router.put('/forms/:id/update', authLimiter, Staff3Controller.updateForm);
 
 // Work report routes

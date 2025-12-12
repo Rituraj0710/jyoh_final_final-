@@ -9,7 +9,7 @@ const auditLogSchema = new mongoose.Schema({
   userRole: {
     type: String,
     required: true,
-    enum: ['user1', 'user2', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'admin']
+    enum: ['user1', 'user2', 'staff1', 'staff2', 'staff3', 'staff4', 'admin']
   },
   action: {
     type: String,
@@ -135,7 +135,7 @@ auditLogSchema.statics.getResourceLogs = function(resource, resourceId, limit = 
 // Static method to get staff activity logs
 auditLogSchema.statics.getStaffActivity = function(limit = 100) {
   return this.find({ 
-    userRole: { $in: ['staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'admin'] }
+    userRole: { $in: ['staff1', 'staff2', 'staff3', 'staff4', 'admin'] }
   })
     .sort({ timestamp: -1 })
     .limit(limit)

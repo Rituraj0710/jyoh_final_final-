@@ -208,7 +208,7 @@ class SupportTicketController {
       }
 
       // Check if user has access (owner or admin/staff)
-      if (ticket.userId._id.toString() !== req.user.id && !['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5'].includes(req.user.role)) {
+      if (ticket.userId._id.toString() !== req.user.id && !['admin', 'staff1', 'staff2', 'staff3', 'staff4'].includes(req.user.role)) {
         return res.status(403).json({
           status: 'failed',
           message: 'Access denied'
@@ -257,7 +257,7 @@ class SupportTicketController {
       }
 
       // Check access
-      if (ticket.userId.toString() !== req.user.id && !['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5'].includes(req.user.role)) {
+      if (ticket.userId.toString() !== req.user.id && !['admin', 'staff1', 'staff2', 'staff3', 'staff4'].includes(req.user.role)) {
         return res.status(403).json({
           status: 'failed',
           message: 'Access denied'

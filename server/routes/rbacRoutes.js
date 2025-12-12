@@ -41,9 +41,9 @@ router.post('/forms/:id/approve',
   approveForm
 );
 
-// Lock form - staff5 only
+// Lock form - admin only (removed staff5)
 router.post('/forms/:id/lock', 
-  authorize('staff5'), 
+  authorize('admin'), 
   auditLog('form_lock'), 
   lockForm
 );
@@ -104,24 +104,5 @@ router.post('/staff4/forms/:id/approve',
   approveForm
 );
 
-// Staff5 specific routes
-router.get('/staff5/forms', 
-  authorize('staff5'), 
-  filterFieldsByRole, 
-  auditLog('staff5_forms'), 
-  getFormsForRole
-);
-
-router.post('/staff5/forms/:id/approve', 
-  authorize('staff5'), 
-  auditLog('staff5_approve'), 
-  approveForm
-);
-
-router.post('/staff5/forms/:id/lock', 
-  authorize('staff5'), 
-  auditLog('staff5_lock'), 
-  lockForm
-);
 
 export default router;

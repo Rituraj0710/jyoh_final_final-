@@ -34,8 +34,6 @@ export default function Staff1LoginPage() {
           router.push('/staff3/dashboard');
         } else if (userRole === 'staff4') {
           router.push('/staff4/dashboard');
-        } else if (userRole === 'staff5') {
-          router.push('/staff5/dashboard');
         } else {
           setError('Access denied. Staff or Admin access required.');
         }

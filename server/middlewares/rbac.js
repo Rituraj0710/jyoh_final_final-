@@ -95,7 +95,7 @@ export const canAccessForm = async (req, res, next) => {
     }
     
     // Staff can access forms based on their role and current stage
-    if (['staff1', 'staff2', 'staff3', 'staff4', 'staff5'].includes(user.role)) {
+    if (['staff1', 'staff2', 'staff3', 'staff4'].includes(user.role)) {
       if (form.currentStage === user.role || user.role === 'admin') {
         hasAccess = true;
       }
@@ -190,7 +190,7 @@ export const canApproveForm = (req, res, next) => {
     // Check if user can approve this form
     const canApprove = 
       user.role === 'admin' || 
-      (['staff1', 'staff2', 'staff3', 'staff4', 'staff5'].includes(user.role) && 
+      (['staff1', 'staff2', 'staff3', 'staff4'].includes(user.role) && 
        form.currentStage === user.role);
 
     if (!canApprove) {
@@ -215,8 +215,8 @@ export const canLockForm = (req, res, next) => {
   try {
     const user = req.user;
 
-    // Only staff5 and admin can lock forms
-    if (!['staff5', 'admin'].includes(user.role)) {
+    // Only admin can lock forms (removed staff5)
+    if (!['admin'].includes(user.role)) {
       return res.status(403).json({
         status: 'failed',
         message: 'Only final approvers can lock forms'

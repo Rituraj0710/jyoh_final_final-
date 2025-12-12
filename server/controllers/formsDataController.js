@@ -374,7 +374,7 @@ class FormsDataController {
 
       // Check permissions
       if (userRole !== 'admin' && userRole !== 'staff1' && userRole !== 'staff2' && 
-          userRole !== 'staff3' && userRole !== 'staff4' && userRole !== 'staff5') {
+          userRole !== 'staff3' && userRole !== 'staff4') {
         if (formData.userId._id.toString() !== userId) {
           return errorResponse(res, 'Access denied', null, 403);
         }
@@ -584,7 +584,7 @@ class FormsDataController {
 
       // Verify staff exists and is active
       const staff = await User.findById(staffId);
-      if (!staff || !staff.isActive || !['staff1', 'staff2', 'staff3', 'staff4', 'staff5'].includes(staff.role)) {
+      if (!staff || !staff.isActive || !['staff1', 'staff2', 'staff3', 'staff4'].includes(staff.role)) {
         return errorResponse(res, 'Invalid staff member', null, 400);
       }
 
@@ -689,7 +689,7 @@ class FormsDataController {
 
       let matchQuery = {};
       if (userRole !== 'admin' && userRole !== 'staff1' && userRole !== 'staff2' && 
-          userRole !== 'staff3' && userRole !== 'staff4' && userRole !== 'staff5') {
+          userRole !== 'staff3' && userRole !== 'staff4') {
         matchQuery.userId = userId;
       }
 

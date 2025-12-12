@@ -50,7 +50,6 @@ export default function AdminLogsPage(){
             <option value="staff2">staff2</option>
             <option value="staff3">staff3</option>
             <option value="staff4">staff4</option>
-            <option value="staff5">staff5</option>
           </select>
         </div>
         <button onClick={() => loadLogs(1, filters)} className="px-3 py-2 bg-gray-900 text-white rounded">Apply</button>

@@ -29,12 +29,12 @@ router.get('/user/list', authenticateToken, authLimiter, SupportTicketController
 router.get('/user/:id', authenticateToken, authLimiter, SupportTicketController.getTicketById);
 
 // Admin/Staff routes
-router.get('/admin/all', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5'), authLimiter, SupportTicketController.getAllTickets);
-router.get('/admin/:id', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5'), authLimiter, SupportTicketController.getTicketById);
+router.get('/admin/all', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4'), authLimiter, SupportTicketController.getAllTickets);
+router.get('/admin/:id', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4'), authLimiter, SupportTicketController.getTicketById);
 router.post('/:id/response', authenticateToken, authLimiter, upload.array('attachments', 5), SupportTicketController.addResponse);
-router.post('/:id/assign', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5'), authLimiter, SupportTicketController.assignTicket);
-router.post('/:id/resolve', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5'), authLimiter, SupportTicketController.resolveTicket);
-router.put('/:id/status', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5'), authLimiter, SupportTicketController.updateTicketStatus);
+router.post('/:id/assign', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4'), authLimiter, SupportTicketController.assignTicket);
+router.post('/:id/resolve', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4'), authLimiter, SupportTicketController.resolveTicket);
+router.put('/:id/status', authenticateToken, authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4'), authLimiter, SupportTicketController.updateTicketStatus);
 router.post('/:id/rating', authenticateToken, authLimiter, SupportTicketController.addRating);
 
 export default router;

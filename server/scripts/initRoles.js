@@ -65,15 +65,6 @@ const initRoles = async () => {
         createdBy: adminUser._id
       },
       {
-        name: 'staff5',
-        displayName: 'Final Approval & Lock',
-        description: 'Final approval and form locking capabilities',
-        permissions: ['read', 'write', 'approve', 'lock'],
-        level: 5,
-        isSystemRole: true,
-        createdBy: adminUser._id
-      },
-      {
         name: 'user1',
         displayName: 'Regular User',
         description: 'Standard user with form submission capabilities',

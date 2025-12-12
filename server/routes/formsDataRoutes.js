@@ -89,13 +89,13 @@ router.put('/payment-status',
 
 router.post('/verify-payment', 
   authLimiter,
-  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5']),
+  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4']),
   FormsDataController.verifyPayment
 );
 
 // Admin/Staff routes - full CRUD access with role-based filtering
 router.get('/admin/forms', 
-  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5']),
+  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4']),
   filterFormsByRole,
   FormsDataController.getAdminForms
 );
@@ -106,7 +106,7 @@ router.get('/:id',
 );
 
 router.put('/:id', 
-  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5']),
+  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4']),
   canViewForm,
   canEditForm,
   authLimiter,
@@ -128,7 +128,7 @@ router.post('/admin/forms/:id/assign',
 );
 
 router.post('/forms/:id/verify', 
-  authorize(['staff1', 'staff2', 'staff3', 'staff4', 'staff5']),
+  authorize(['staff1', 'staff2', 'staff3', 'staff4']),
   canViewForm,
   canVerifyForm,
   authLimiter,
@@ -145,7 +145,7 @@ router.post('/admin/forms/:id/approve',
 
 // Staff routes - get assigned forms with role-based filtering
 router.get('/staff/forms', 
-  authorize(['staff1', 'staff2', 'staff3', 'staff4', 'staff5']),
+  authorize(['staff1', 'staff2', 'staff3', 'staff4']),
   filterFormsByRole,
   FormsDataController.getStaffForms
 );

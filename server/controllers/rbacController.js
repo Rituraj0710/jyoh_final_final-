@@ -44,13 +44,6 @@ export const getFormsForRole = async (req, res) => {
           status: 'under_review'
         };
         break;
-      case 'staff5':
-        query = {
-          'approvals.staff4.approved': true,
-          'approvals.staff5.approved': false,
-          status: 'under_review'
-        };
-        break;
       default:
         return res.status(403).json({
           success: false,
@@ -243,7 +236,7 @@ export const approveForm = async (req, res) => {
 };
 
 /**
- * Lock form (staff5 only)
+ * Lock form (admin only - removed staff5)
  */
 export const lockForm = async (req, res) => {
   try {
@@ -251,10 +244,10 @@ export const lockForm = async (req, res) => {
     const { role } = req.user;
     const { comments } = req.body;
     
-    if (role !== 'staff5') {
+    if (role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Only staff5 can lock forms'
+        message: 'Only admin can lock forms'
       });
     }
     
@@ -355,10 +348,9 @@ function filterFormDataByRole(formData, role) {
       'approvals', 'staff1Approval', 'staff2Approval', 'staff3Approval',
       'overallStatus', 'reviewNotes'
     ],
-    staff5: Object.keys(formData) // Can see everything
   };
   
-  if (role === 'staff5') {
+  if (role === 'admin') {
     return formData;
   }
   
@@ -390,8 +382,6 @@ function canUserAccessForm(form, role) {
     case 'staff4':
       return approvals.staff1.approved && approvals.staff2.approved && 
              approvals.staff3.approved && !approvals.staff4.approved;
-    case 'staff5':
-      return approvals.staff4.approved && !approvals.staff5.approved;
     default:
       return false;
   }
@@ -427,10 +417,6 @@ async function getRoleDashboardData(role) {
       baseQuery['approvals.staff2.approved'] = true;
       baseQuery['approvals.staff3.approved'] = true;
       baseQuery['approvals.staff4.approved'] = false;
-      break;
-    case 'staff5':
-      baseQuery['approvals.staff4.approved'] = true;
-      baseQuery['approvals.staff5.approved'] = false;
       break;
   }
   

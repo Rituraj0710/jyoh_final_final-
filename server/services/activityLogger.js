@@ -205,7 +205,7 @@ class ActivityLogger {
    */
   static getUserType(role) {
     if (role === 'admin') return 'admin';
-    if (['staff1', 'staff2', 'staff3', 'staff4', 'staff5'].includes(role)) return 'staff';
+    if (['staff1', 'staff2', 'staff3', 'staff4'].includes(role)) return 'staff';
     if (['user1', 'user2'].includes(role)) return 'agent';
     return 'agent'; // default
   }

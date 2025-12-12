@@ -42,7 +42,7 @@ const AdminPrivateRoute = ({ children, allowedRoles = ['admin'], redirectTo = '/
           console.log('AdminPrivateRoute - Role not allowed:', role, 'allowed:', allowedRoles);
           
           // Block ALL staff users from admin panel - redirect to their dashboard
-          const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4', 'staff5'];
+          const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4'];
           if (staffRoles.includes(role)) {
             console.log('AdminPrivateRoute - BLOCKING staff access to admin panel, redirecting to staff dashboard');
             router.push('/staff1/dashboard');

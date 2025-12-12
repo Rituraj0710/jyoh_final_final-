@@ -341,7 +341,7 @@ class AdminController {
 
       // Fallback if roles are not initialized in DB
       if (!staffRoleNames || staffRoleNames.length === 0) {
-        staffRoleNames = ['staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'admin'];
+        staffRoleNames = ['staff1', 'staff2', 'staff3', 'staff4', 'admin'];
       }
 
       const staff = await UserModel.find({

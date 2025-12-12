@@ -47,7 +47,7 @@ const Staff1PrivateRoute = ({ children, redirectTo = '/admin/login' }) => {
           }
           
           // Check role from localStorage
-          const allowedRoles = ['staff1', 'staff2', 'staff3', 'staff4', 'staff5'];
+          const allowedRoles = ['staff1', 'staff2', 'staff3', 'staff4'];
           if (!allowedRoles.includes(storedRole)) {
             console.log('Staff1PrivateRoute - Access denied, localStorage role:', storedRole);
             setIsAuthenticated(false);
@@ -62,7 +62,7 @@ const Staff1PrivateRoute = ({ children, redirectTo = '/admin/login' }) => {
         }
 
         // Check if user has staff role (allow all staff levels)
-        const allowedRoles = ['staff1', 'staff2', 'staff3', 'staff4', 'staff5'];
+        const allowedRoles = ['staff1', 'staff2', 'staff3', 'staff4'];
         if (!allowedRoles.includes(user.role)) {
           console.log('Staff1PrivateRoute - Access denied, user role:', user.role);
           setIsAuthenticated(false);

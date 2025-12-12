@@ -71,17 +71,10 @@ const formSchema = new mongoose.Schema({
       comments: { type: String },
       overallAssessment: { type: String }
     },
-    staff5: {
-      approved: { type: Boolean, default: false },
-      approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      approvedAt: { type: Date },
-      comments: { type: String },
-      finalLock: { type: Boolean, default: false }
-    }
   },
   currentStage: {
     type: String,
-    enum: ['draft', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'completed'],
+    enum: ['draft', 'staff1', 'staff2', 'staff3', 'staff4', 'completed'],
     default: 'draft'
   },
   submittedAt: {
@@ -105,14 +98,14 @@ formSchema.index({ currentStage: 1 });
 
 // Virtual for form progress
 formSchema.virtual('progress').get(function() {
-  const stages = ['draft', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'completed'];
+  const stages = ['draft', 'staff1', 'staff2', 'staff3', 'staff4', 'completed'];
   const currentIndex = stages.indexOf(this.currentStage);
   return Math.round((currentIndex / (stages.length - 1)) * 100);
 });
 
 // Virtual for next stage
 formSchema.virtual('nextStage').get(function() {
-  const stages = ['draft', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'completed'];
+  const stages = ['draft', 'staff1', 'staff2', 'staff3', 'staff4', 'completed'];
   const currentIndex = stages.indexOf(this.currentStage);
   return currentIndex < stages.length - 1 ? stages[currentIndex + 1] : null;
 });
@@ -142,8 +135,7 @@ formSchema.methods.getApprovalStatus = function() {
     staff1: approvals.staff1.approved,
     staff2: approvals.staff2.approved,
     staff3: approvals.staff3.approved,
-    staff4: approvals.staff4.approved,
-    staff5: approvals.staff5.approved
+    staff4: approvals.staff4.approved
   };
   
   return status;

@@ -804,7 +804,7 @@ const Navbar = () => {
                 </Link>
               </li>
             )}
-            {(isAuth && (role === "staff1" || role === "staff2" || role === "staff3" || role === "staff4" || role === "staff5")) && (
+            {(isAuth && (role === "staff1" || role === "staff2" || role === "staff3" || role === "staff4")) && (
               <li>
                 <Link
                   href={`/${role}/dashboard`}

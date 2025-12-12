@@ -39,16 +39,9 @@ export const Staff4DashboardWrapper = ({ children }) => (
   </EnhancedProtectedRoute>
 );
 
-// Staff5 Dashboard Wrapper
-export const Staff5DashboardWrapper = ({ children }) => (
-  <EnhancedProtectedRoute allowedRoles={['staff5', 'admin']}>
-    {children}
-  </EnhancedProtectedRoute>
-);
-
 // Generic Staff Dashboard Wrapper (any staff role)
 export const StaffDashboardWrapper = ({ children }) => (
-  <EnhancedProtectedRoute allowedRoles={['staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'admin']}>
+  <EnhancedProtectedRoute allowedRoles={['staff1', 'staff2', 'staff3', 'staff4', 'admin']}>
     {children}
   </EnhancedProtectedRoute>
 );

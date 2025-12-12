@@ -25,8 +25,7 @@ const StaffProfile = () => {
       staff1: 'Form Review & Stamp Calculation',
       staff2: 'Trustee Details Validation', 
       staff3: 'Land/Plot Details Verification',
-      staff4: 'Approval & Review',
-      staff5: 'Final Approval & Lock'
+      staff4: 'Approval & Review'
     };
     return roleDescriptions[role] || 'Staff Member';
   };

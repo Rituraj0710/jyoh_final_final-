@@ -25,7 +25,7 @@ const PrivateRoute = ({ children, allowedRoles = [], redirectTo = '/user/login' 
                 // Check if role is allowed
         if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
           // Redirect to appropriate login based on role
-          if (['staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'admin'].includes(role)) {
+          if (['staff1', 'staff2', 'staff3', 'staff4', 'admin'].includes(role)) {
             router.push('/staff/login');
           } else if (role === 'user1') {
             router.push('/user/login');

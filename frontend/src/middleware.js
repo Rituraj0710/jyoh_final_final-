@@ -18,7 +18,7 @@ export async function middleware(request){
     if (path === '/admin/login' && isAuthenticated) {
       if (isRole === 'admin') return NextResponse.redirect(new URL('/admin', request.url));
       // Redirect all staff roles to staff1 dashboard
-      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4', 'staff5'];
+      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4'];
       if (staffRoles.includes(isRole)) {
         return NextResponse.redirect(new URL('/staff1/dashboard', request.url));
       }
@@ -27,7 +27,7 @@ export async function middleware(request){
 
     // Block staff users from accessing any admin routes
     if (path.startsWith('/admin') && path !== '/admin/login' && isAuthenticated) {
-      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4', 'staff5'];
+      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4'];
       if (staffRoles.includes(isRole)) {
         console.log('Middleware - BLOCKING staff access to admin route:', path);
         return NextResponse.redirect(new URL('/staff1/dashboard', request.url));

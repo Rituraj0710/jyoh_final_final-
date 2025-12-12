@@ -90,7 +90,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Check if user has admin, staff, or user role (including agents)
-    const allowedRoles = ['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'user1', 'user2'];
+    const allowedRoles = ['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'user1', 'user2'];
     if (!allowedRoles.includes(user.role)) {
       return res.status(403).json({
         success: false,

@@ -82,17 +82,17 @@ router.get("/roles/available",
 
 // Forms Management Routes
 router.get("/forms", 
-  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5']), 
+  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4']), 
   AdminController.getAdminForms
 );
 
 router.get("/forms/:id", 
-  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5']), 
+  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4']), 
   AdminController.getFormById
 );
 
 router.put("/forms/:id", 
-  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5']), 
+  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4']), 
   AdminController.updateForm
 );
 
@@ -102,7 +102,7 @@ router.delete("/forms/:id",
 );
 
 router.get("/forms/stats", 
-  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5']), 
+  authorize(['admin', 'staff1', 'staff2', 'staff3', 'staff4']), 
   AdminController.getFormStats
 );
 

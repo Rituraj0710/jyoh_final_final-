@@ -66,8 +66,8 @@ const FormViewer = ({ formId }) => {
   };
 
   const handleLock = async () => {
-    if (user.role !== 'staff5') {
-      alert('Only Staff 5 can lock forms');
+    if (user.role !== 'admin') {
+      alert('Only Admin can lock forms');
       return;
     }
 
@@ -77,7 +77,7 @@ const FormViewer = ({ formId }) => {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          comments: 'Form locked by Staff 5'
+          comments: 'Form locked by Admin'
         })
       });
 
@@ -125,10 +125,6 @@ const FormViewer = ({ formId }) => {
         return {
           overallAssessment: 'All validations completed successfully'
         };
-      case 'staff5':
-        return {
-          finalLock: true
-        };
       default:
         return {};
     }
@@ -150,12 +146,11 @@ const FormViewer = ({ formId }) => {
       staff4: [
         'approvals', 'staff1Approval', 'staff2Approval', 'staff3Approval'
       ],
-      staff5: Object.keys(form.data) // Can see everything
     };
 
     const allowedFields = roleFields[user.role] || [];
     return Object.entries(form.data).filter(([key]) => 
-      user.role === 'staff5' || allowedFields.includes(key)
+      user.role === 'admin' || allowedFields.includes(key)
     );
   };
 
@@ -281,7 +276,7 @@ const FormViewer = ({ formId }) => {
       {canAccess && !form.locked && (
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
           <div className="flex justify-end space-x-3">
-            {user.role === 'staff5' && (
+            {user.role === 'admin' && (
               <button
                 onClick={handleLock}
                 disabled={approving}
@@ -305,8 +300,8 @@ const FormViewer = ({ formId }) => {
       {/* Approval Status */}
       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
         <h4 className="text-sm font-medium text-gray-900 mb-3">Approval Status</h4>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {['staff1', 'staff2', 'staff3', 'staff4', 'staff5'].map((staff) => (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {['staff1', 'staff2', 'staff3', 'staff4'].map((staff) => (
             <div key={staff} className="text-center">
               <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${
                 form.approvals?.[staff]?.approved 

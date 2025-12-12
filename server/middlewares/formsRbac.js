@@ -84,17 +84,6 @@ export const canAccessFormsData = async (req, res, next) => {
         canVerify: true,
         canEditAssigned: true,
         allowedServiceTypes: ['property_registration', 'property_sale', 'property_transfer', 'will_deed', 'trust_deed', 'property_mortgage', 'property_lease', 'property_gift', 'property_inheritance', 'property_partition']
-      },
-      'staff5': {
-        canViewAll: true,
-        canEditAll: false,
-        canAssign: false,
-        canApprove: true,
-        canReject: true,
-        canVerify: true,
-        canEditAssigned: false,
-        canLock: true,
-        allowedServiceTypes: ['property_registration', 'property_sale', 'property_transfer', 'will_deed', 'trust_deed', 'property_mortgage', 'property_lease', 'property_gift', 'property_inheritance', 'property_partition', 'property_survey', 'property_valuation']
       }
     };
 

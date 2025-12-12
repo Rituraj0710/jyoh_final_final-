@@ -27,8 +27,7 @@ const resetStaffPasswords = async () => {
       { email: 'staff1@test.com', role: 'staff1' },
       { email: 'staff2@test.com', role: 'staff2' },
       { email: 'staff3@test.com', role: 'staff3' },
-      { email: 'staff4@test.com', role: 'staff4' },
-      { email: 'staff5@test.com', role: 'staff5' }
+      { email: 'staff4@test.com', role: 'staff4' }
     ];
 
     const newPassword = 'Demo@1122';

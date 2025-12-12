@@ -100,7 +100,7 @@ export const authorizeAdmin = (req, res, next) => {
  * Middleware for any staff member
  */
 export const authorizeStaff = (req, res, next) => {
-  return authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5')(req, res, next);
+  return authorizeRoles('admin', 'staff1', 'staff2', 'staff3', 'staff4')(req, res, next);
 };
 
 export default {

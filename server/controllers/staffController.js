@@ -29,8 +29,8 @@ class StaffController {
         return res.status(400).json({status:"failed", message:"Invalid email or password"});
       }
 
-      // Check if user is a staff member (staff1, staff2, staff3, staff4, staff5) or admin
-      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'admin'];
+      // Check if user is a staff member (staff1, staff2, staff3, staff4) or admin
+      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4', 'admin'];
       if(!staffRoles.includes(user.role)){
         return res.status(403).json({status: "failed", message: "Access denied. Not a staff member"})
       }
@@ -143,7 +143,7 @@ class StaffController {
       }
 
       // Check if user is a staff member
-      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4', 'staff5'];
+      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4'];
       if(!staffRoles.includes(user.role)){
         return res.status(403).json({status:"failed", message:"Access denied. Not a staff member."});
       }
@@ -188,7 +188,7 @@ class StaffController {
       }
 
       // Check if user is a staff member
-      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4', 'staff5'];
+      const staffRoles = ['staff1', 'staff2', 'staff3', 'staff4'];
       if(!staffRoles.includes(user.role)){
         return res.status(403).json({status: "failed", message:"Access denied. Not a staff member."});
       }
@@ -250,7 +250,7 @@ class StaffController {
   // Get staff list
   static getStaffList = async (req, res) => {
     try {
-      const staff = await User.find({ role: { $in: ['staff1', 'staff2', 'staff3', 'staff4', 'staff5'] } })
+      const staff = await User.find({ role: { $in: ['staff1', 'staff2', 'staff3', 'staff4'] } })
         .select('-password')
         .sort({ createdAt: -1 });
 

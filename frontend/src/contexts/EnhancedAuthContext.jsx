@@ -14,8 +14,6 @@ const getDashboardPath = (role) => {
       return '/staff3/dashboard';
     case 'staff4':
       return '/staff4/dashboard';
-    case 'staff5':
-      return '/staff5/dashboard';
     case 'user1':
       return '/user/dashboard';
     case 'user2':
@@ -26,7 +24,7 @@ const getDashboardPath = (role) => {
 };
 
 const isValidRole = (role) => {
-  const validRoles = ['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'staff5', 'user1', 'user2'];
+  const validRoles = ['admin', 'staff1', 'staff2', 'staff3', 'staff4', 'user1', 'user2'];
   return validRoles.includes(role);
 };
 

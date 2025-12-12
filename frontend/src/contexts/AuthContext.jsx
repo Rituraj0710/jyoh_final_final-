@@ -204,7 +204,6 @@ export const AuthProvider = ({ children }) => {
       staff2: 'Trustee Details Validation',
       staff3: 'Land/Plot Details Verification',
       staff4: 'Approval & Review',
-      staff5: 'Final Approval & Lock',
       admin: 'Administrator'
     };
     return roleNames[role] || role;
@@ -229,8 +228,6 @@ export const AuthProvider = ({ children }) => {
                approvals?.staff2?.approved && 
                approvals?.staff3?.approved && 
                !approvals?.staff4?.approved;
-      case 'staff5':
-        return approvals?.staff4?.approved && !approvals?.staff5?.approved;
       default:
         return false;
     }

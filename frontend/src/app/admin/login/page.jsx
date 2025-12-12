@@ -145,9 +145,6 @@ export default function AdminLoginPage(){
           } else if (userRole === 'staff4') {
             console.log('Redirecting to staff4 dashboard...');
             window.location.href = '/staff4/dashboard';
-          } else if (userRole === 'staff5') {
-            console.log('Redirecting to staff5 dashboard...');
-            window.location.href = '/staff5/dashboard';
           } else {
             console.log('Unknown role, redirecting based on tab...');
             if (tab === 'admin') {

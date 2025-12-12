@@ -54,7 +54,6 @@ export default function StaffManagementPage() {
       { name: 'staff2', displayName: 'Trustee Details Validation', level: 2 },
       { name: 'staff3', displayName: 'Land/Plot Details Verification', level: 3 },
       { name: 'staff4', displayName: 'Approval & Review', level: 4 },
-      { name: 'staff5', displayName: 'Final Approval & Lock', level: 5 },
       { name: 'admin', displayName: 'System Administrator', level: 10 }
     ];
 

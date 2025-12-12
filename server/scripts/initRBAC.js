@@ -55,14 +55,6 @@ const initRBAC = async () => {
         employeeId: 'EMP004'
       },
       {
-        name: 'David Davis',
-        email: 'staff5@example.com',
-        password: 'password123',
-        role: 'staff5',
-        department: 'Final Approval',
-        employeeId: 'EMP005'
-      },
-      {
         name: 'Admin User',
         email: 'admin@example.com',
         password: 'password123',
@@ -107,7 +99,6 @@ const initRBAC = async () => {
           staff2: { approved: false },
           staff3: { approved: false },
           staff4: { approved: false },
-          staff5: { approved: false }
         }
       },
       {
@@ -138,7 +129,6 @@ const initRBAC = async () => {
           staff2: { approved: false },
           staff3: { approved: false },
           staff4: { approved: false },
-          staff5: { approved: false }
         }
       }
     ];
@@ -200,7 +190,6 @@ const initRBAC = async () => {
     console.log('- Staff 2: Trustee Details Validation');
     console.log('- Staff 3: Land/Plot Details Verification');
     console.log('- Staff 4: Approval & Review');
-    console.log('- Staff 5: Final Approval & Lock');
 
   } catch (error) {
     logger.error('RBAC initialization failed:', error);

@@ -68,8 +68,7 @@ const StaffSidebar = () =>{
       staff1: 'Form Review & Stamp Calculation',
       staff2: 'Trustee Details Validation', 
       staff3: 'Land/Plot Details Verification',
-      staff4: 'Approval & Review',
-      staff5: 'Final Approval & Lock'
+      staff4: 'Approval & Review'
     };
     return roleDescriptions[role] || 'Staff Member';
   };
@@ -105,9 +104,6 @@ const StaffSidebar = () =>{
           )}
           {userRole === 'staff4' && (
             <li className="mb-4"><Link href="/staff/form/4" className="hover:text-indigo-400 transition duration-300 ease-in-out">Approval Review</Link></li>
-          )}
-          {userRole === 'staff5' && (
-            <li className="mb-4"><Link href="/staff/form/5" className="hover:text-indigo-400 transition duration-300 ease-in-out">Final Approval</Link></li>
           )}
           
           <li><button onClick={handleLogout} className="hover:text-indigo-400 transition duration-300 ease-in-out">Logout</button></li>

@@ -34,8 +34,6 @@ export default function Staff4LoginPage() {
           router.push('/staff3/dashboard');
         } else if (userRole === 'staff4') {
           router.push('/staff4/dashboard');
-        } else if (['staff5'].includes(userRole)) {
-          router.push('/staff1/dashboard'); // Other staff roles go to staff1 dashboard for now
         } else {
           setError('Access denied. Staff4 access required.');
         }
